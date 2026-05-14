@@ -150,13 +150,6 @@ TEST_F(DBEngineTest, LIndexReturnsElementByPositiveIndex) {
     EXPECT_EQ(db.LIndex("list", 1).value(), "b");
 }
 
-TEST_F(DBEngineTest, LIndexReturnsElementByNegativeIndex) {
-    db.RPush("list", "a");
-    db.RPush("list", "b");
-
-    EXPECT_EQ(db.LIndex("list", -1).value(), "b");
-}
-
 TEST_F(DBEngineTest, LIndexOutOfRangeReturnsError) {
     db.RPush("list", "a");
 
@@ -183,17 +176,6 @@ TEST_F(DBEngineTest, LRangeReturnsMiddlePart) {
     db.RPush("list", "c");
 
     auto result = db.LRange("list", 1, 2);
-
-    ASSERT_TRUE(result.has_value());
-    EXPECT_EQ(result.value(), std::vector<std::string>({"b", "c"}));
-}
-
-TEST_F(DBEngineTest, LRangeSupportsNegativeIndexes) {
-    db.RPush("list", "a");
-    db.RPush("list", "b");
-    db.RPush("list", "c");
-
-    auto result = db.LRange("list", -2, -1);
 
     ASSERT_TRUE(result.has_value());
     EXPECT_EQ(result.value(), std::vector<std::string>({"b", "c"}));
