@@ -38,6 +38,7 @@ class DBEngine {
     std::unordered_map<std::string, StorageEntry> storage_;
 
     bool DeleteIfExpired(std::string_view it);
+    void DeleteIfExpiredAll();
 
 
    public:

@@ -3,13 +3,13 @@
 #include <algorithm>
 #include <ranges>
 
-#include "ErrorsHandling/PropagateExpected.hpp"
 #include "Glob/GlobMatcher.hpp"
 
 namespace keyval {
 
 std::expected<void, error::Error> DBEngine::Set(std::string_view key,
                                                 std::string_view value) {
+    DeleteIfExpired(key);
     auto it = storage_.find(std::string(key));
 
     if (it != storage_.end()) {
@@ -19,6 +19,7 @@ std::expected<void, error::Error> DBEngine::Set(std::string_view key,
                              "DB entry already exists with different type"});
         }
         it->second.value = std::string(value);
+        it->second.expire_time = std::nullopt;
     } else {
         storage_[std::string(key)] =
             StorageEntry(std::string(value), StorageType::kString);
@@ -192,14 +193,12 @@ std::expected<std::string, error::Error> DBEngine::LIndex(
     }
     const auto& list = std::get<std::list<std::string>>(it->second.value);
     auto size = list.size();
-    if (index < 0) {
-        index += size;
-    }
 
     if (index < 0 || index >= size) {
         return std::unexpected(
             error::Error{error::ErrorCode::kInvalidCommand, "Invalid index"});
     }
+
     auto list_it = list.begin();
     std::advance(list_it, index);
     return *list_it;
@@ -259,7 +258,7 @@ std::expected<void, error::Error> DBEngine::LInsert(std::string_view key,
     auto& list = std::get<std::list<std::string>>(it->second.value);
     auto size = list.size();
 
-    if (index < 0 || index >= size) {
+    if (index < 0 || index > size) {
         return std::unexpected(
             error::Error{error::ErrorCode::kInvalidCommand, "Invalid index"});
     }
@@ -657,9 +656,9 @@ std::expected<std::optional<std::size_t>, error::Error> DBEngine::GetTTL(
 std::expected<std::vector<std::string>, error::Error> DBEngine::Keys(
     std::string_view pattern) {
     std::vector<std::string> result;
+    DeleteIfExpiredAll();
 
     for (const auto& entry : storage_) {
-        if (DeleteIfExpired(entry.first)) continue;
         if (GlobMatcher::Match(pattern, entry.first)) {
             result.push_back(entry.first);
         }
@@ -670,9 +669,7 @@ std::expected<std::vector<std::string>, error::Error> DBEngine::Keys(
 void DBEngine::FlushDb() { storage_.clear(); }
 
 size_t DBEngine::EntryCount() {
-    for (auto& entry : storage_) {
-        DeleteIfExpired(entry.first);
-    }
+    DeleteIfExpiredAll();
     return storage_.size();
 }
 
@@ -732,6 +729,17 @@ bool DBEngine::DeleteIfExpired(
         return true;
     }
     return false;
+}
+
+void DBEngine::DeleteIfExpiredAll() {
+    for (auto it = storage_.begin(); it != storage_.end();) {
+        if(it->second.expire_time.has_value() && it->second.expire_time.value() <= std::chrono::steady_clock::now()){
+            it=storage_.erase(it);
+        }
+        else{
+            ++it;
+        }
+    }
 }
 
 }  // namespace keyval
