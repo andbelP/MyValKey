@@ -68,7 +68,7 @@ std::expected<void, error::Error> DBEngine::RPush(std::string_view key, std::str
     return {};
 }
 
-std::expected<void, error::Error> DBEngine::LPop(std::string_view key) {
+std::expected<std::string, error::Error> DBEngine::LPop(std::string_view key) {
     auto it = storage_.find(std::string(key));
     if(it== storage_.end()){
         return std::unexpected(error::Error{error::ErrorCode::kKeyNotFound, "Key not found"});
@@ -80,14 +80,15 @@ std::expected<void, error::Error> DBEngine::LPop(std::string_view key) {
     if(list.empty()){
         return std::unexpected(error::Error(error::ErrorCode::kInvalidCommand, "List is empty"));
     }
+    std::string value = list.front();
     list.pop_front();
     if(list.empty()){
         storage_.erase(it);
     }
-    return {};
+    return value;
 }
 
-std::expected<void, error::Error> DBEngine::RPop(std::string_view key) {
+std::expected<std::string, error::Error> DBEngine::RPop(std::string_view key) {
     auto it = storage_.find(std::string(key));
     if(it== storage_.end()){
         return std::unexpected(error::Error{error::ErrorCode::kKeyNotFound, "Key not found"});
@@ -99,11 +100,12 @@ std::expected<void, error::Error> DBEngine::RPop(std::string_view key) {
     if(list.empty()){
         return std::unexpected(error::Error(error::ErrorCode::kInvalidCommand, "List is empty"));
     }
+    std::string value = list.back();
     list.pop_back();
     if(list.empty()){
         storage_.erase(it);
     }
-    return {};
+    return value;
 }
 
 std::expected<std::size_t, error::Error> DBEngine::LLen(std::string_view key) const {

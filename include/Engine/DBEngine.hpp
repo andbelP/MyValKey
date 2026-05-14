@@ -48,9 +48,9 @@ class DBEngine {
     std::expected<void, error::Error> RPush(std::string_view key,
                                             std::string_view value);
 
-    std::expected<void, error::Error> LPop(std::string_view key);
+    std::expected<std::string, error::Error> LPop(std::string_view key);
 
-    std::expected<void, error::Error> RPop(std::string_view key);
+    std::expected<std::string, error::Error> RPop(std::string_view key);
 
     std::expected<std::size_t, error::Error> LLen(std::string_view key) const;
 
