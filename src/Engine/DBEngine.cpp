@@ -1,6 +1,8 @@
-#include "Engine/DBEngine.hpp"
 #include <algorithm>
 #include <ranges>
+
+#include "Engine/DBEngine.hpp"
+#include "Glob/GlobMatcher.hpp"
 
 namespace keyval {
 
@@ -276,8 +278,13 @@ std::expected<std::optional<std::size_t>, error::Error> DBEngine::GetTTL(std::st
 }
 
 std::expected<std::vector<std::string>, error::Error> DBEngine::Keys(std::string_view pattern) const {
-    return {};
-    //TODO
+    std::vector<std::string> result;
+    for (const auto& entry : storage_) {
+        if (GlobMatcher::Match(pattern, entry.first)) {
+            result.push_back(entry.first);
+        }
+    }
+    return result;
 }
 
 void DBEngine::FlushDb() {
