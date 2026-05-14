@@ -30,17 +30,23 @@ struct StorageEntry {
     StorageEntry() = default;
 
     StorageEntry(ValueType&& val, StorageType t)
-        : value(std::move(val)), type(t) {} // TODO: add forwarding reference to constructor
+        : value(std::move(val)),
+          type(t) {}  // TODO: add forwarding reference to constructor
 };
 
 class DBEngine {
     std::unordered_map<std::string, StorageEntry> storage_;
+
+    bool DeleteIfExpired(std::string_view it);
+
 
    public:
     std::expected<void, error::Error> Set(std::string_view key,
                                           std::string_view value);
 
     std::expected<std::string, error::Error> Get(std::string_view key);
+
+    std::expected<std::size_t, error::Error> StrLen(std::string_view key);
 
     std::expected<void, error::Error> LPush(std::string_view key,
                                             std::string_view value);
@@ -52,13 +58,21 @@ class DBEngine {
 
     std::expected<std::string, error::Error> RPop(std::string_view key);
 
-    std::expected<std::size_t, error::Error> LLen(std::string_view key) const;
+    std::expected<std::size_t, error::Error> LLen(std::string_view key);
 
     std::expected<std::vector<std::string>, error::Error> LRange(
-        std::string_view key, std::ptrdiff_t start, std::ptrdiff_t stop) const;
+        std::string_view key, std::ptrdiff_t start, std::ptrdiff_t stop);
 
     std::expected<std::string, error::Error> LIndex(std::string_view key,
-                                                    std::ptrdiff_t index) const;
+                                                    std::ptrdiff_t index);
+
+    std::expected<void, error::Error> LSet(std::string_view key,
+                                           std::ptrdiff_t index,
+                                           std::string_view value);
+
+    std::expected<void, error::Error> LInsert(std::string_view key,
+                                                     std::ptrdiff_t index,
+                                                     std::string_view value);
 
     std::expected<void, error::Error> SAdd(std::string_view key,
                                            std::string_view member);
@@ -67,27 +81,43 @@ class DBEngine {
                                            std::string_view member);
 
     std::expected<bool, error::Error> SIsMember(std::string_view key,
-                                                std::string_view member) const;
+                                                std::string_view member);
 
     std::expected<std::unordered_set<std::string>, error::Error> SMembers(
-        std::string_view key) const;
+        std::string_view key);
 
-    std::expected<std::size_t, error::Error> SCard(std::string_view key) const;
+    std::expected<std::size_t, error::Error> SCard(std::string_view key);
+
+    std::expected<std::unordered_set<std::string>, error::Error> SUnion(
+        std::span<const std::string_view> keys);
+
+    std::expected<std::unordered_set<std::string>, error::Error> SInter(
+        std::span<const std::string_view> keys);
+
+    std::expected<std::unordered_set<std::string>, error::Error> SDiff(
+        std::span<const std::string_view> keys);
+
+    std::expected<void, error::Error> SMove(std::string_view source,
+                                            std::string_view destination,
+                                            std::string_view member);
 
     std::expected<void, error::Error> Del(std::string_view key);
 
-    std::expected<bool, error::Error> Exists(std::string_view key) const;
+    std::expected<bool, error::Error> Exists(std::string_view key);
 
-    std::expected<StorageType, error::Error> Type(std::string_view key) const;
+    std::expected<StorageType, error::Error> Type(std::string_view key);
 
     std::expected<void, error::Error> Expire(std::string_view key,
                                              std::chrono::seconds seconds);
 
     std::expected<std::optional<std::size_t>, error::Error> GetTTL(
-        std::string_view key) const;
+        std::string_view key);
 
     std::expected<std::vector<std::string>, error::Error> Keys(
-        std::string_view pattern) const;
+        std::string_view pattern);
+
+    std::size_t EntryCount();
+    std::expected<size_t, error::Error> MemoryUsageOfKey(std::string_view key);
 
     void FlushDb();
 };
