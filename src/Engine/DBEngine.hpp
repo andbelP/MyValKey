@@ -90,13 +90,13 @@ class DBEngine {
     std::expected<std::size_t, error::Error> SCard(std::string_view key);
 
     std::expected<std::unordered_set<std::string>, error::Error> SUnion(
-        std::span<const std::string_view> keys);
+        std::span<const std::string> keys);
 
     std::expected<std::unordered_set<std::string>, error::Error> SInter(
-        std::span<const std::string_view> keys);
+        std::span<const std::string> keys);
 
     std::expected<std::unordered_set<std::string>, error::Error> SDiff(
-        std::span<const std::string_view> keys);
+        std::span<const std::string> keys);
 
     std::expected<void, error::Error> SMove(std::string_view source,
                                             std::string_view destination,

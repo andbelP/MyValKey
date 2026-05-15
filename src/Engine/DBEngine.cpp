@@ -349,7 +349,7 @@ std::expected<void, error::Error> DBEngine::SRem(std::string_view key,
 }
 
 std::expected<std::unordered_set<std::string>, error::Error> DBEngine::SUnion(
-    std::span<const std::string_view> keys) {
+    std::span<const std::string> keys) {
     std::unordered_set<std::string> result;
 
     for (auto key : keys) {
@@ -380,7 +380,7 @@ std::expected<std::unordered_set<std::string>, error::Error> DBEngine::SUnion(
 }
 
 std::expected<std::unordered_set<std::string>, error::Error> DBEngine::SInter(
-    std::span<const std::string_view> keys) {
+    std::span<const std::string> keys) {
 
     std::unordered_set<std::string> result;
 
@@ -440,7 +440,7 @@ std::expected<std::unordered_set<std::string>, error::Error> DBEngine::SInter(
 }
 
 std::expected<std::unordered_set<std::string>, error::Error> DBEngine::SDiff(
-    std::span<const std::string_view> keys) {
+    std::span<const std::string> keys) {
     std::unordered_set<std::string> result;
 
     if (keys.empty()) {
