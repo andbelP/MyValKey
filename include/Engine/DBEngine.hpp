@@ -37,8 +37,14 @@ struct StorageEntry {
 class DBEngine {
     std::unordered_map<std::string, StorageEntry> storage_;
 
+    std::optional<std::size_t> max_memory_usage_;
+
     bool DeleteIfExpired(std::string_view it);
     void DeleteIfExpiredAll();
+
+    std::expected<size_t, error::Error> MemoryUsageOfEntry(const StorageEntry& entry);
+
+    bool CanAddBytes(std::size_t cnt);
 
 
    public:
@@ -121,6 +127,12 @@ class DBEngine {
     std::expected<size_t, error::Error> MemoryUsageOfKey(std::string_view key);
 
     void FlushDb();
+
+    std::expected<void, error::Error> SetMaxMemoryUsage(std::size_t max_memory_usage);
+
+    std::optional<std::size_t> GetMaxMemoryUsage() const;
+
+    std::size_t GetCurrentMemoryUsage();
 };
 
 }  // namespace keyval

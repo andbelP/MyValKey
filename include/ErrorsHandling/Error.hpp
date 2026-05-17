@@ -8,7 +8,8 @@ namespace keyval::error{
         kInvalidCommand,
         kKeyNotFound,
         kWrongType,
-        kEngineError
+        kUndefinedError,
+        kMaxMemoryExceeded
     };
 
     struct Error {

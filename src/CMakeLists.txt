@@ -1,7 +1,10 @@
 add_library(keyval 
-    Engine/DBEngine.cpp
     Glob/GlobMatcher.cpp
     ValKeyInterpreter/ValKeyInterpreter.cpp
+    Engine/DBEngineGeneral.cpp
+    Engine/DBEngineString.cpp
+    Engine/DBEngineList.cpp
+    Engine/DBEngineSet.cpp
 )
 target_include_directories(keyval PUBLIC 
     ${PROJECT_SOURCE_DIR}/include

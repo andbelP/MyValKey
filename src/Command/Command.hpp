@@ -3,6 +3,7 @@
 #include <string>
 #include <optional>
 #include <vector>
+#include <variant>
 
 namespace keyval {
 
@@ -11,9 +12,14 @@ struct ValKeyCommand{
     std::vector<std::string> args;
 };
 
-struct ValKeyResult{
-    std::optional<std::string> to_cout;
-    std::optional<std::string> to_cerr;
+
+struct Ok{};
+struct Null{};
+struct ValKeyError{
+    std::string description;
 };
+
+
+using ValKeyResult = std::variant<Ok, Null, std::string, std::vector<std::string>, ValKeyError>;
 
 } // namespace keyval
