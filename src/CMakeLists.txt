@@ -8,10 +8,19 @@ add_library(keyval
     ValKeyInterpreter/ValKeyInterpreterList.cpp
     ValKeyInterpreter/ValKeyInterpreterSet.cpp
     ValKeyInterpreter/ValKeyInterpreterString.cpp
+    Parser/CommandParser.cpp
 )
 target_include_directories(keyval PUBLIC 
     ${PROJECT_SOURCE_DIR}/include
 )
 target_include_directories(keyval PRIVATE 
+    ${PROJECT_SOURCE_DIR}/src
+)
+
+add_executable(valkey 
+    main.cpp
+)
+target_link_libraries(valkey PRIVATE keyval)
+target_include_directories(valkey PRIVATE 
     ${PROJECT_SOURCE_DIR}/src
 )

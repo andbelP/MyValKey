@@ -5,7 +5,7 @@
 #include <string>
 
 #include "Engine/DBEngine.hpp"
-#include "Command/Command.hpp"
+#include "CommandResult/CommandResult.hpp"
 
 namespace keyval {
 
