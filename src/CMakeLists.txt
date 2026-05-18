@@ -5,6 +5,9 @@ add_library(keyval
     Engine/DBEngineString.cpp
     Engine/DBEngineList.cpp
     Engine/DBEngineSet.cpp
+    ValKeyInterpreter/ValKeyInterpreterList.cpp
+    ValKeyInterpreter/ValKeyInterpreterSet.cpp
+    ValKeyInterpreter/ValKeyInterpreterString.cpp
 )
 target_include_directories(keyval PUBLIC 
     ${PROJECT_SOURCE_DIR}/include
