@@ -53,6 +53,9 @@ class DBEngine {
 
     std::expected<std::string, error::Error> Get(std::string_view key);
 
+    std::expected<void, error::Error> Append(std::string_view key,
+                                             std::string_view value);
+
     std::expected<std::size_t, error::Error> StrLen(std::string_view key);
 
     std::expected<void, error::Error> LPush(std::string_view key,
@@ -107,6 +110,7 @@ class DBEngine {
     std::expected<void, error::Error> SMove(std::string_view source,
                                             std::string_view destination,
                                             std::string_view member);
+
 
     std::expected<void, error::Error> Del(std::string_view key);
 
