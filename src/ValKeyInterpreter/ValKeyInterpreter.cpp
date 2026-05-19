@@ -20,6 +20,21 @@ std::string ToUpper(std::string value) {
     return value;
 }
 
+std::expected<std::int64_t, std::string> ParseInt(const std::string& text) {
+    try {
+        std::size_t pos = 0;
+        auto value = std::stoll(text, &pos);
+
+        if (pos != text.size()) {
+            return std::unexpected("invalid number");
+        }
+
+        return value;
+    } catch (const std::exception&) {
+        return std::unexpected("invalid number");
+    }
+}
+
 }  // namespace
 
 ValKeyResult ValKeyInterpreter::Interpret(const ValKeyCommand& command) {
@@ -101,5 +116,95 @@ ValKeyResult ValKeyInterpreter::Type(std::span<const std::string> args) {
 
     return "undefined type";
 }
+
+ValKeyResult ValKeyInterpreter::Expire(std::span<const std::string> args) {
+    if (args.size() != 2) {
+        return ValKeyError("invalid args cnt");
+    }
+
+    auto ttl_result = ParseInt(std::string(args[1]));
+    if (!ttl_result.has_value() || ttl_result.value() < 0) {
+        return ValKeyError{ttl_result.error()};
+    }
+    auto result = engine_.Expire(args[0], std::chrono::seconds(ttl_result.value()));
+    if (!result.has_value()) {
+        return ValKeyError{result.error().description};
+    }
+    return Ok{};
+
+}
+
+ValKeyResult ValKeyInterpreter::TTL(std::span<const std::string> args) {
+    if (args.size() != 1) {
+        return ValKeyError("invalid args cnt");
+    }
+
+    auto result = engine_.GetTTL(args[0]);
+    if (!result.has_value()) {
+        if (result.error().code == error::ErrorCode::kKeyNotFound) {
+            return std::to_string(-2);
+        }
+        return ValKeyError{result.error().description};
+    }
+
+    if (!result.value().has_value()) {
+        return std::to_string(-1);
+    }
+
+    return std::to_string(result.value().value());
+
+}
+
+ValKeyResult ValKeyInterpreter::Keys(std::span<const std::string> args) {
+    if (args.size() != 1) {
+        return ValKeyError("invalid args cnt");
+    }
+
+    auto result = engine_.Keys(args[0]);
+    if (!result.has_value()) {
+        return ValKeyError{result.error().description};
+    }
+
+    std::vector<std::string> keys(result.value().begin(), result.value().end());
+    return keys;
+}
+
+ValKeyResult ValKeyInterpreter::FlushDB(std::span<const std::string> args) {
+    if (!args.empty()) {
+        return ValKeyError("invalid args cnt");
+    }
+
+    engine_.FlushDb();
+    return Ok{};
+
+}
+
+ValKeyResult ValKeyInterpreter::DbSize(std::span<const std::string> args) {
+    if (!args.empty()) {
+        return ValKeyError("invalid args cnt");
+    }
+
+    auto result = engine_.EntryCount();
+
+    return std::to_string(result);
+}
+
+ValKeyResult ValKeyInterpreter::MemoryUsage(std::span<const std::string> args) {
+    if (args.size() != 2 || ToUpper(args[0]) != "USAGE") {
+        return ValKeyError("invalid command. try MEMORY USAGE <key>");
+    }
+
+    auto result = engine_.MemoryUsageOfKey(args[1]);
+    if (!result.has_value()) {
+        return Null{};
+    }
+
+    return std::to_string(result.value());
+}
+
+ValKeyResult ValKeyInterpreter::Config(std::span<const std::string> args) {
+    // TODO;
+}
+
 
 }  // namespace keyval

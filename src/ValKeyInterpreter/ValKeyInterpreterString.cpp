@@ -53,4 +53,21 @@ ValKeyResult ValKeyInterpreter::StrLen(std::span<const std::string> args) {
     return std::to_string(result.value());
 }
 
+ValKeyResult ValKeyInterpreter::Append(std::span<const std::string> args) {
+    if (args.size() != 2) {
+        return ValKeyError{"invalid args cnt"};
+    }
+
+    auto result = engine_.Append(args[0], args[1]);
+    if (!result.has_value()) {
+        if (result.error().code == error::ErrorCode::kMaxMemoryExceeded) {
+            return ValKeyError{"OOM command not allowed when used memory > 'maxmemory'"}; // TODO поменять названия ошибок в DBENGINE чтобы не делать тут костыли.
+        }
+        return ValKeyError{result.error().description};
+    }
+
+    return std::to_string(engine_.StrLen(args[0]).value());
+
+}
+
 }

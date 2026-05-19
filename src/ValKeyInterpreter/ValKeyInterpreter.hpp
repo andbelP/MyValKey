@@ -17,6 +17,8 @@ class ValKeyInterpreter {
 
     ValKeyResult Get(std::span<const std::string> args);
 
+    ValKeyResult Append(std::span<const std::string> args);
+
     ValKeyResult StrLen(std::span<const std::string> args);
 
     ValKeyResult LPush(std::span<const std::string> args);
@@ -61,6 +63,20 @@ class ValKeyInterpreter {
 
     ValKeyResult Type(std::span<const std::string> args);
 
+    ValKeyResult Expire(std::span<const std::string> args);
+
+    ValKeyResult TTL(std::span<const std::string> args);
+
+    ValKeyResult Keys(std::span<const std::string> args);
+
+    ValKeyResult FlushDB(std::span<const std::string> args);
+
+    ValKeyResult DbSize(std::span<const std::string> args);
+
+    ValKeyResult MemoryUsage(std::span<const std::string> args);
+
+    ValKeyResult Config(std::span<const std::string> args);
+
     inline static const std::unordered_map<std::string, ValKeyResult (ValKeyInterpreter::*)(std::span<const std::string>)> methods_{
         {"SET", &ValKeyInterpreter::Set},
         {"GET", &ValKeyInterpreter::Get},
@@ -85,7 +101,15 @@ class ValKeyInterpreter {
         {"SMOVE", &ValKeyInterpreter::SMove},
         {"DEL", &ValKeyInterpreter::Del},
         {"EXISTS", &ValKeyInterpreter::Exists},
-        {"TYPE", &ValKeyInterpreter::Type}
+        {"TYPE", &ValKeyInterpreter::Type},
+        {"EXPIRE", &ValKeyInterpreter::Expire},
+        {"TTL", &ValKeyInterpreter::TTL},
+        {"KEYS", &ValKeyInterpreter::Keys},
+        {"FLUSHDB", &ValKeyInterpreter::FlushDB},
+        {"DBSIZE", &ValKeyInterpreter::DbSize},
+        {"MEMORY", &ValKeyInterpreter::MemoryUsage},
+        {"CONFIG", &ValKeyInterpreter::Config},
+        {"APPEND", &ValKeyInterpreter::Append}
     };
 
 public:
