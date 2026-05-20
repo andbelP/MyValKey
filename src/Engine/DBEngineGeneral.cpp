@@ -151,6 +151,9 @@ std::expected<void, error::Error> DBEngine::SetMaxMemoryUsage(
             error::ErrorCode::kInvalidCommand,
             "New max memory usage is less than current memory usage"});
     }
+    if(bytes==0){
+        return {};
+    }
     max_memory_usage_ = bytes;
     return {};
 }
