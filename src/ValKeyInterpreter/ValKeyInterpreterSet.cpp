@@ -179,6 +179,12 @@ ValKeyResult ValKeyInterpreter::SMove(std::span<const std::string> args) {
         return ValKeyError("invalid args cnt");
     }
 
+    if(!engine_.Exists(args[1]).value_or(false)){
+        auto res = engine_.SCreate(args[1]);
+        if (!res.has_value()) {
+            return ValKeyError{res.error().description};
+        }
+    }
     auto result = engine_.SMove(args[0], args[1], args[2]);
     if (!result.has_value()) {
         if (result.error().code == error::ErrorCode::kKeyNotFound ||
