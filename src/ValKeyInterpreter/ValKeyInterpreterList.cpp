@@ -232,6 +232,44 @@ ValKeyResult ValKeyInterpreter::LSet(std::span<const std::string> args) {
 }
 
 ValKeyResult ValKeyInterpreter::LInsert(std::span<const std::string> args) {
-    return ValKeyError("TODO");
+    auto size_exp = engine_.LLen(args[0]);
+    if(!size_exp){
+        if(size_exp.error().code == error::ErrorCode::kKeyNotFound){
+            return ValKeyError{"no such key"};
+        }
+        return ValKeyError{size_exp.error().description};
+    }
+
+    for(int i = 0; i < size_exp.value(); ++i){
+        auto val = engine_.LIndex(args[0], i);
+        if(!val){
+            return ValKeyError{val.error().description};
+        }
+        if(val.value() == args[2]){
+            if(ToUpper(args[1]) == "BEFORE"){
+                auto result = engine_.LInsert(args[0], i-1, args[3]);
+                if (!result.has_value()) {
+                    if (result.error().code == error::ErrorCode::kMaxMemoryExceeded) {
+                        return ValKeyError{"OOM command not allowed when used memory > 'maxmemory'"};
+                    }
+                    return ValKeyError{result.error().description};
+                }
+                return Ok{};
+            } else if(ToUpper(args[1]) == "AFTER"){
+                auto result = engine_.LInsert(args[0], i, args[3]);
+                if (!result.has_value()) {
+                    if (result.error().code == error::ErrorCode::kMaxMemoryExceeded) {
+                        return ValKeyError{"OOM command not allowed when used memory > 'maxmemory'"};
+                    }
+                    return ValKeyError{result.error().description};
+                }
+                return Ok{};
+            } else{
+                return ValKeyError{"second arg must be BEFORE or AFTER"};
+            }
+        }
+    }
+
 }
-}
+
+}  // namespace keyval
