@@ -269,6 +269,7 @@ ValKeyResult ValKeyInterpreter::LInsert(std::span<const std::string> args) {
             }
         }
     }
+    return ValKeyError{"pivot not found"};
 
 }
 
