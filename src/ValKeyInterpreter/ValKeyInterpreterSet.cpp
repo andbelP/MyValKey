@@ -120,11 +120,25 @@ ValKeyResult ValKeyInterpreter::SUnion(std::span<const std::string> args) {
         return ValKeyError("invalid args cnt");
     }
 
-    auto result = engine_.SUnion(args);
-    if (!result.has_value()) {
-        if (result.error().code == error::ErrorCode::kKeyNotFound) {
-            return std::vector<std::string>{};
+    std::vector<std::string> existing_keys;
+
+    for (const auto& key : args) {
+        auto exists = engine_.Exists(key);
+        if (!exists.has_value()) {
+            return ValKeyError{exists.error().description};
         }
+
+        if (exists.value()) {
+            existing_keys.push_back(key);
+        }
+    }
+
+    if (existing_keys.empty()) {
+        return std::vector<std::string>{};
+    }
+
+    auto result = engine_.SUnion(existing_keys);
+    if (!result.has_value()) {
         return ValKeyError{result.error().description};
     }
 
