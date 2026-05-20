@@ -3,16 +3,31 @@
 #include "Engine/DBEngine.hpp"
 #include "Parser/CommandParser.hpp"
 #include "ValKeyInterpreter/ValKeyInterpreter.hpp"
+#include "ValKeyInterpreter/Utils.hpp"
 
-int main() {
+int main(int argc, char** argv) {
     keyval::DBEngine engine;
     keyval::ValKeyInterpreter interpreter(engine);
+
+    if(argc == 3 && std::string(argv[1]) == "--maxmemory"){
+        auto memory_result = ParseMemorySize(argv[2]);
+        if(!memory_result.has_value()){
+            std::cerr << "Error: " << memory_result.error().description << "\n";
+            return 1;
+        }
+        auto result = engine.SetMaxMemoryUsage(memory_result.value());
+        if(!result.has_value()){
+            std::cerr << "Error: " << result.error().description << "\n";
+            return 1;
+        }
+    }
+
     std::string line;
     while (std::getline(std::cin, line)) {
         if (line.empty()) {
             continue;
         }
-        if (line == "EXIT") {
+        if (ToUpper(line) == "EXIT") {
             break;
         }
         auto command = keyval::CommandParser::Parse(line);

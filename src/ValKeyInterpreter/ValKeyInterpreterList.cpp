@@ -1,32 +1,7 @@
 #include "ValKeyInterpreter.hpp"
+#include "Utils.hpp"
 
 namespace keyval {
-
-namespace{
-
-std::expected<std::int64_t, std::string> ParseInt(const std::string& text) {
-    try {
-        std::size_t pos = 0;
-        auto value = std::stoll(text, &pos);
-
-        if (pos != text.size()) {
-            return std::unexpected("invalid number");
-        }
-
-        return value;
-    } catch (const std::exception&) {
-        return std::unexpected("invalid number");
-    }
-}
-
-std::string ToUpper(std::string value) {
-    for (auto& ch : value) {
-        ch = std::toupper(ch);
-    }
-    return value;
-}
-
-}
 
 ValKeyResult ValKeyInterpreter::LPush(std::span<const std::string> args) {
     if (args.size() < 2) {

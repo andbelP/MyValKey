@@ -1,4 +1,5 @@
 #include "ValKeyInterpreter.hpp"
+#include "Utils.hpp"
 
 #include <algorithm>
 #include <cctype>
@@ -10,32 +11,6 @@
 #include <vector>
 
 namespace keyval {
-
-namespace {
-
-std::string ToUpper(std::string value) {
-    for (auto& ch : value) {
-        ch = std::toupper(ch);
-    }
-    return value;
-}
-
-std::expected<std::int64_t, std::string> ParseInt(const std::string& text) {
-    try {
-        std::size_t pos = 0;
-        auto value = std::stoll(text, &pos);
-
-        if (pos != text.size()) {
-            return std::unexpected("invalid number");
-        }
-
-        return value;
-    } catch (const std::exception&) {
-        return std::unexpected("invalid number");
-    }
-}
-
-}  // namespace
 
 ValKeyResult ValKeyInterpreter::Interpret(const ValKeyCommand& command) {
     auto command_type = ToUpper(command.type);
@@ -203,7 +178,47 @@ ValKeyResult ValKeyInterpreter::MemoryUsage(std::span<const std::string> args) {
 }
 
 ValKeyResult ValKeyInterpreter::Config(std::span<const std::string> args) {
-    // TODO;
+    static const std::unordered_map<std::string, ValKeyResult (ValKeyInterpreter::*)(std::span<const std::string>args)> methods {
+        {"MAXMEMORY", &ValKeyInterpreter::ConfigMaxMemory}
+    };
+
+    if(args.size() < 2){
+        return ValKeyError{"undefined command"};
+    }
+
+    auto it = methods.find(ToUpper(args[1]));
+    if(it == methods.end()){
+        return ValKeyError{"unknown config parameter: " + args[1]};
+    }
+
+    return (this->*(it->second))(args);
+}
+
+ValKeyResult ValKeyInterpreter::ConfigMaxMemory(std::span<const std::string> args) {
+    
+    if(args.size() == 2 && ToUpper(args[0])=="GET" && ToUpper(args[1]) == "MAXMEMORY"){
+        if(engine_.GetMaxMemoryUsage().has_value()){
+            return std::to_string(engine_.GetMaxMemoryUsage().value());
+        }
+        else{
+            return ValKeyError{"maxmemory is not set"};
+        }
+    }
+    else if(args.size() == 3 && ToUpper(args[0])=="SET" && ToUpper(args[1]) == "MAXMEMORY"){
+        auto memory_result = ParseMemorySize(args[2]);
+        if(!memory_result.has_value()){
+            return ValKeyError{memory_result.error()};
+        }
+        
+        auto result = engine_.SetMaxMemoryUsage(memory_result.value());
+        if(!result.has_value()){
+            return ValKeyError{result.error().description};
+        }
+        return Ok{};
+    }
+    else{
+        return ValKeyError{"invalid command. try CONFIG GET maxmemory or CONFIG SET maxmemory <cnt>"};
+    }
 }
 
 

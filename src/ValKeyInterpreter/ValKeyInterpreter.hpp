@@ -77,6 +77,8 @@ class ValKeyInterpreter {
 
     ValKeyResult Config(std::span<const std::string> args);
 
+    ValKeyResult ConfigMaxMemory(std::span<const std::string>args);
+
     inline static const std::unordered_map<std::string, ValKeyResult (ValKeyInterpreter::*)(std::span<const std::string>)> methods_{
         {"SET", &ValKeyInterpreter::Set},
         {"GET", &ValKeyInterpreter::Get},

@@ -9,6 +9,7 @@ add_library(keyval
     ValKeyInterpreter/ValKeyInterpreterSet.cpp
     ValKeyInterpreter/ValKeyInterpreterString.cpp
     Parser/CommandParser.cpp
+    ValKeyInterpreter/Utils.cpp
 )
 target_include_directories(keyval PUBLIC 
     ${PROJECT_SOURCE_DIR}/include
