@@ -42,6 +42,26 @@ std::expected<void, error::Error> DBEngine::SAdd(std::string_view key,
     return {};
 }
 
+std::expected<void, error::Error> DBEngine::SCreate(std::string_view key) {
+    DeleteIfExpired(key);
+
+    auto it = storage_.find(std::string(key));
+    if (it != storage_.end()) {
+        return std::unexpected(
+            error::Error{error::ErrorCode::kKeyAlreadyExists,
+                         "DB entry already exists, cant create set"});
+    }
+
+    if(max_memory_usage_.has_value() && !CanAddBytes(GetSizeOfSet(std::unordered_set<std::string>{}))) {
+        return std::unexpected(error::Error{
+            error::ErrorCode::kMaxMemoryExceeded,
+            "Cannot create set: max memory usage exceeded"});
+    }
+
+    storage_[std::string(key)] = StorageEntry(std::unordered_set<std::string>{}, StorageType::kSet);
+    return {};
+}
+
 std::expected<void, error::Error> DBEngine::SRem(std::string_view key,
                                                  std::string_view member) {
     DeleteIfExpired(key);

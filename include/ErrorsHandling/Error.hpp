@@ -9,7 +9,8 @@ namespace keyval::error{
         kKeyNotFound,
         kWrongType,
         kUndefinedError,
-        kMaxMemoryExceeded
+        kMaxMemoryExceeded,
+        kKeyAlreadyExists
     };
 
     struct Error {

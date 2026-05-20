@@ -84,6 +84,8 @@ class DBEngine {
                                                      std::ptrdiff_t index,
                                                      std::string_view value);
 
+    std::expected<void, error::Error> SCreate(std::string_view key);
+
     std::expected<void, error::Error> SAdd(std::string_view key,
                                            std::string_view member);
 
