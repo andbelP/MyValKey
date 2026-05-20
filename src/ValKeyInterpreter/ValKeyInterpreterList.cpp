@@ -232,10 +232,15 @@ ValKeyResult ValKeyInterpreter::LSet(std::span<const std::string> args) {
 }
 
 ValKeyResult ValKeyInterpreter::LInsert(std::span<const std::string> args) {
+
+    if(args.size() != 4){
+        return ValKeyError("invalid args cnt");
+    }
+
     auto size_exp = engine_.LLen(args[0]);
     if(!size_exp){
         if(size_exp.error().code == error::ErrorCode::kKeyNotFound){
-            return ValKeyError{"no such key"};
+            return "0";
         }
         return ValKeyError{size_exp.error().description};
     }
@@ -247,15 +252,6 @@ ValKeyResult ValKeyInterpreter::LInsert(std::span<const std::string> args) {
         }
         if(val.value() == args[2]){
             if(ToUpper(args[1]) == "BEFORE"){
-                auto result = engine_.LInsert(args[0], i-1, args[3]);
-                if (!result.has_value()) {
-                    if (result.error().code == error::ErrorCode::kMaxMemoryExceeded) {
-                        return ValKeyError{"OOM command not allowed when used memory > 'maxmemory'"};
-                    }
-                    return ValKeyError{result.error().description};
-                }
-                return Ok{};
-            } else if(ToUpper(args[1]) == "AFTER"){
                 auto result = engine_.LInsert(args[0], i, args[3]);
                 if (!result.has_value()) {
                     if (result.error().code == error::ErrorCode::kMaxMemoryExceeded) {
@@ -263,13 +259,35 @@ ValKeyResult ValKeyInterpreter::LInsert(std::span<const std::string> args) {
                     }
                     return ValKeyError{result.error().description};
                 }
-                return Ok{};
+
+                auto len_exp = engine_.LLen(args[0]);
+                if(!len_exp){
+                    return ValKeyError(len_exp.error().description);
+                }
+                return std::to_string(len_exp.value());
+
+            } else if(ToUpper(args[1]) == "AFTER"){
+
+                auto result = engine_.LInsert(args[0], i+1, args[3]);
+                if (!result.has_value()) {
+                    if (result.error().code == error::ErrorCode::kMaxMemoryExceeded) {
+                        return ValKeyError{"OOM command not allowed when used memory > 'maxmemory'"};
+                    }
+                    return ValKeyError{result.error().description};
+                }
+                
+                auto len_exp = engine_.LLen(args[0]);
+                if(!len_exp){
+                    return ValKeyError(len_exp.error().description);
+                }
+                return std::to_string(len_exp.value());
+
             } else{
                 return ValKeyError{"second arg must be BEFORE or AFTER"};
             }
         }
     }
-    return ValKeyError{"pivot not found"};
+    return "-1";
 
 }
 
