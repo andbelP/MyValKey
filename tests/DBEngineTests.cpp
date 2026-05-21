@@ -11,325 +11,325 @@
 using namespace keyval;
 
 class DBEngineTest : public ::testing::Test {
-   protected:
-    DBEngine db;
+   public:
+    DBEngine db_;
 
-    void SetUp() override { db.FlushDb(); }
+    void SetUp() override { db_.FlushDb(); }
 };
 
 TEST_F(DBEngineTest, SetStoresString) {
-    auto result = db.Set("key", "value");
+    auto result = db_.Set("key", "value");
 
     EXPECT_TRUE(result.has_value());
-    EXPECT_EQ(db.Get("key").value(), "value");
+    EXPECT_EQ(db_.Get("key").value(), "value");
 }
 
 TEST_F(DBEngineTest, SetOverwritesString) {
-    db.Set("key", "old");
+    db_.Set("key", "old");
 
-    auto result = db.Set("key", "new");
+    auto result = db_.Set("key", "new");
 
     EXPECT_TRUE(result.has_value());
-    EXPECT_EQ(db.Get("key").value(), "new");
+    EXPECT_EQ(db_.Get("key").value(), "new");
 }
 
 TEST_F(DBEngineTest, SetStoresEmptyString) {
-    db.Set("key", "");
+    db_.Set("key", "");
 
-    EXPECT_EQ(db.Get("key").value(), "");
+    EXPECT_EQ(db_.Get("key").value(), "");
 }
 
 TEST_F(DBEngineTest, KeysAreCaseSensitive) {
-    db.Set("key", "lower");
-    db.Set("Key", "upper");
+    db_.Set("key", "lower");
+    db_.Set("Key", "upper");
 
-    EXPECT_EQ(db.Get("key").value(), "lower");
-    EXPECT_EQ(db.Get("Key").value(), "upper");
+    EXPECT_EQ(db_.Get("key").value(), "lower");
+    EXPECT_EQ(db_.Get("Key").value(), "upper");
 }
 
 TEST_F(DBEngineTest, GetMissingKeyReturnsError) {
-    auto result = db.Get("missing");
+    auto result = db_.Get("missing");
 
     ASSERT_FALSE(result.has_value());
     EXPECT_EQ(result.error().code, error::ErrorCode::kKeyNotFound);
 }
 
 TEST_F(DBEngineTest, GetListReturnsWrongType) {
-    db.LPush("key", "value");
+    db_.LPush("key", "value");
 
-    auto result = db.Get("key");
+    auto result = db_.Get("key");
 
     ASSERT_FALSE(result.has_value());
     EXPECT_EQ(result.error().code, error::ErrorCode::kWrongType);
 }
 
 TEST_F(DBEngineTest, SetOnListReturnsWrongType) {
-    db.LPush("key", "value");
+    db_.LPush("key", "value");
 
-    auto result = db.Set("key", "string");
+    auto result = db_.Set("key", "string");
 
     ASSERT_FALSE(result.has_value());
     EXPECT_EQ(result.error().code, error::ErrorCode::kWrongType);
 }
 
 TEST_F(DBEngineTest, TypeForString) {
-    db.Set("key", "value");
+    db_.Set("key", "value");
 
-    auto result = db.Type("key");
+    auto result = db_.Type("key");
 
     ASSERT_TRUE(result.has_value());
     EXPECT_EQ(result.value(), StorageType::kString);
 }
 
 TEST_F(DBEngineTest, LPushCreatesList) {
-    auto result = db.LPush("list", "a");
+    auto result = db_.LPush("list", "a");
 
     EXPECT_TRUE(result.has_value());
-    EXPECT_EQ(db.LLen("list").value(), 1);
+    EXPECT_EQ(db_.LLen("list").value(), 1);
 }
 
 TEST_F(DBEngineTest, LPushAddsToFront) {
-    db.LPush("list", "b");
-    db.LPush("list", "a");
+    db_.LPush("list", "b");
+    db_.LPush("list", "a");
 
-    EXPECT_EQ(db.LIndex("list", 0).value(), "a");
+    EXPECT_EQ(db_.LIndex("list", 0).value(), "a");
 }
 
 TEST_F(DBEngineTest, RPushCreatesList) {
-    auto result = db.RPush("list", "a");
+    auto result = db_.RPush("list", "a");
 
     EXPECT_TRUE(result.has_value());
-    EXPECT_EQ(db.LLen("list").value(), 1);
+    EXPECT_EQ(db_.LLen("list").value(), 1);
 }
 
 TEST_F(DBEngineTest, RPushAddsToBack) {
-    db.RPush("list", "a");
-    db.RPush("list", "b");
+    db_.RPush("list", "a");
+    db_.RPush("list", "b");
 
-    EXPECT_EQ(db.LIndex("list", 1).value(), "b");
+    EXPECT_EQ(db_.LIndex("list", 1).value(), "b");
 }
 
 TEST_F(DBEngineTest, MixedPushKeepsExpectedOrder) {
-    db.RPush("list", "b");
-    db.LPush("list", "a");
-    db.RPush("list", "c");
+    db_.RPush("list", "b");
+    db_.LPush("list", "a");
+    db_.RPush("list", "c");
 
-    auto result = db.LRange("list", 0, 2);
+    auto result = db_.LRange("list", 0, 2);
 
     ASSERT_TRUE(result.has_value());
     EXPECT_EQ(result.value(), std::vector<std::string>({"a", "b", "c"}));
 }
 
 TEST_F(DBEngineTest, LLenReturnsListSize) {
-    db.RPush("list", "a");
-    db.RPush("list", "b");
+    db_.RPush("list", "a");
+    db_.RPush("list", "b");
 
-    EXPECT_EQ(db.LLen("list").value(), 2);
+    EXPECT_EQ(db_.LLen("list").value(), 2);
 }
 
 TEST_F(DBEngineTest, LLenMissingKeyReturnsError) {
-    auto result = db.LLen("missing");
+    auto result = db_.LLen("missing");
 
     ASSERT_FALSE(result.has_value());
     EXPECT_EQ(result.error().code, error::ErrorCode::kKeyNotFound);
 }
 
 TEST_F(DBEngineTest, LLenWrongTypeReturnsError) {
-    db.Set("key", "value");
+    db_.Set("key", "value");
 
-    auto result = db.LLen("key");
+    auto result = db_.LLen("key");
 
     ASSERT_FALSE(result.has_value());
     EXPECT_EQ(result.error().code, error::ErrorCode::kWrongType);
 }
 
 TEST_F(DBEngineTest, LIndexReturnsElementByPositiveIndex) {
-    db.RPush("list", "a");
-    db.RPush("list", "b");
+    db_.RPush("list", "a");
+    db_.RPush("list", "b");
 
-    EXPECT_EQ(db.LIndex("list", 1).value(), "b");
+    EXPECT_EQ(db_.LIndex("list", 1).value(), "b");
 }
 
 TEST_F(DBEngineTest, LIndexOutOfRangeReturnsError) {
-    db.RPush("list", "a");
+    db_.RPush("list", "a");
 
-    auto result = db.LIndex("list", 10);
+    auto result = db_.LIndex("list", 10);
 
     ASSERT_FALSE(result.has_value());
     EXPECT_EQ(result.error().code, error::ErrorCode::kInvalidCommand);
 }
 
 TEST_F(DBEngineTest, LRangeReturnsWholeList) {
-    db.RPush("list", "a");
-    db.RPush("list", "b");
-    db.RPush("list", "c");
+    db_.RPush("list", "a");
+    db_.RPush("list", "b");
+    db_.RPush("list", "c");
 
-    auto result = db.LRange("list", 0, 2);
+    auto result = db_.LRange("list", 0, 2);
 
     ASSERT_TRUE(result.has_value());
     EXPECT_EQ(result.value(), std::vector<std::string>({"a", "b", "c"}));
 }
 
 TEST_F(DBEngineTest, LRangeReturnsMiddlePart) {
-    db.RPush("list", "a");
-    db.RPush("list", "b");
-    db.RPush("list", "c");
+    db_.RPush("list", "a");
+    db_.RPush("list", "b");
+    db_.RPush("list", "c");
 
-    auto result = db.LRange("list", 1, 2);
+    auto result = db_.LRange("list", 1, 2);
 
     ASSERT_TRUE(result.has_value());
     EXPECT_EQ(result.value(), std::vector<std::string>({"b", "c"}));
 }
 
 TEST_F(DBEngineTest, LRangeInvalidRangeReturnsError) {
-    db.RPush("list", "a");
-    db.RPush("list", "b");
+    db_.RPush("list", "a");
+    db_.RPush("list", "b");
 
-    auto result = db.LRange("list", 1, 0);
+    auto result = db_.LRange("list", 1, 0);
 
     ASSERT_FALSE(result.has_value());
     EXPECT_EQ(result.error().code, error::ErrorCode::kInvalidCommand);
 }
 
 TEST_F(DBEngineTest, LPopRemovesFrontElement) {
-    db.RPush("list", "a");
-    db.RPush("list", "b");
+    db_.RPush("list", "a");
+    db_.RPush("list", "b");
 
-    db.LPop("list");
+    db_.LPop("list");
 
-    EXPECT_EQ(db.LIndex("list", 0).value(), "b");
+    EXPECT_EQ(db_.LIndex("list", 0).value(), "b");
 }
 
 TEST_F(DBEngineTest, RPopRemovesBackElement) {
-    db.RPush("list", "a");
-    db.RPush("list", "b");
+    db_.RPush("list", "a");
+    db_.RPush("list", "b");
 
-    db.RPop("list");
+    db_.RPop("list");
 
-    EXPECT_EQ(db.LIndex("list", 0).value(), "a");
+    EXPECT_EQ(db_.LIndex("list", 0).value(), "a");
 }
 
 TEST_F(DBEngineTest, LPopDeletesKeyAfterLastElement) {
-    db.RPush("list", "a");
+    db_.RPush("list", "a");
 
-    db.LPop("list");
+    db_.LPop("list");
 
-    EXPECT_FALSE(db.Exists("list").value());
+    EXPECT_FALSE(db_.Exists("list").value());
 }
 
 TEST_F(DBEngineTest, RPopMissingKeyReturnsError) {
-    auto result = db.RPop("missing");
+    auto result = db_.RPop("missing");
 
     ASSERT_FALSE(result.has_value());
     EXPECT_EQ(result.error().code, error::ErrorCode::kKeyNotFound);
 }
 
 TEST_F(DBEngineTest, TypeForList) {
-    db.LPush("list", "a");
+    db_.LPush("list", "a");
 
-    EXPECT_EQ(db.Type("list").value(), StorageType::kList);
+    EXPECT_EQ(db_.Type("list").value(), StorageType::kList);
 }
 
 TEST_F(DBEngineTest, SAddCreatesSet) {
-    auto result = db.SAdd("set", "a");
+    auto result = db_.SAdd("set", "a");
 
     EXPECT_TRUE(result.has_value());
-    EXPECT_EQ(db.SCard("set").value(), 1);
+    EXPECT_EQ(db_.SCard("set").value(), 1);
 }
 
 TEST_F(DBEngineTest, SAddIgnoresDuplicateMembers) {
-    db.SAdd("set", "a");
-    db.SAdd("set", "a");
+    db_.SAdd("set", "a");
+    db_.SAdd("set", "a");
 
-    EXPECT_EQ(db.SCard("set").value(), 1);
+    EXPECT_EQ(db_.SCard("set").value(), 1);
 }
 
 TEST_F(DBEngineTest, SIsMemberReturnsTrueForExistingMember) {
-    db.SAdd("set", "a");
+    db_.SAdd("set", "a");
 
-    EXPECT_TRUE(db.SIsMember("set", "a").value());
+    EXPECT_TRUE(db_.SIsMember("set", "a").value());
 }
 
 TEST_F(DBEngineTest, SIsMemberReturnsFalseForMissingMember) {
-    db.SAdd("set", "a");
+    db_.SAdd("set", "a");
 
-    EXPECT_FALSE(db.SIsMember("set", "b").value());
+    EXPECT_FALSE(db_.SIsMember("set", "b").value());
 }
 
 TEST_F(DBEngineTest, SIsMemberMissingKeyReturnsError) {
-    auto result = db.SIsMember("missing", "a");
+    auto result = db_.SIsMember("missing", "a");
 
     ASSERT_FALSE(result.has_value());
     EXPECT_EQ(result.error().code, error::ErrorCode::kKeyNotFound);
 }
 
 TEST_F(DBEngineTest, SRemRemovesMember) {
-    db.SAdd("set", "a");
+    db_.SAdd("set", "a");
 
-    db.SRem("set", "a");
+    db_.SRem("set", "a");
 
-    EXPECT_FALSE(db.SIsMember("set", "a").value());
+    EXPECT_FALSE(db_.SIsMember("set", "a").value());
 }
 
 TEST_F(DBEngineTest, SRemMissingMemberDoesNotFail) {
-    db.SAdd("set", "a");
+    db_.SAdd("set", "a");
 
-    auto result = db.SRem("set", "b");
+    auto result = db_.SRem("set", "b");
 
     EXPECT_TRUE(result.has_value());
-    EXPECT_EQ(db.SCard("set").value(), 1);
+    EXPECT_EQ(db_.SCard("set").value(), 1);
 }
 
 TEST_F(DBEngineTest, SMembersReturnsAllMembers) {
-    db.SAdd("set", "a");
-    db.SAdd("set", "b");
+    db_.SAdd("set", "a");
+    db_.SAdd("set", "b");
 
-    auto result = db.SMembers("set");
+    auto result = db_.SMembers("set");
 
     ASSERT_TRUE(result.has_value());
     EXPECT_EQ(result.value(), std::unordered_set<std::string>({"a", "b"}));
 }
 
 TEST_F(DBEngineTest, SCardWrongTypeReturnsError) {
-    db.Set("key", "value");
+    db_.Set("key", "value");
 
-    auto result = db.SCard("key");
+    auto result = db_.SCard("key");
 
     ASSERT_FALSE(result.has_value());
     EXPECT_EQ(result.error().code, error::ErrorCode::kWrongType);
 }
 
 TEST_F(DBEngineTest, TypeForSet) {
-    db.SAdd("set", "a");
+    db_.SAdd("set", "a");
 
-    EXPECT_EQ(db.Type("set").value(), StorageType::kSet);
+    EXPECT_EQ(db_.Type("set").value(), StorageType::kSet);
 }
 
 TEST_F(DBEngineTest, DelRemovesExistingKey) {
-    db.Set("key", "value");
+    db_.Set("key", "value");
 
-    auto result = db.Del("key");
+    auto result = db_.Del("key");
 
     EXPECT_TRUE(result.has_value());
-    EXPECT_FALSE(db.Exists("key").value());
+    EXPECT_FALSE(db_.Exists("key").value());
 }
 
 TEST_F(DBEngineTest, FlushDbRemovesAllKeys) {
-    db.Set("a", "1");
-    db.Set("b", "2");
+    db_.Set("a", "1");
+    db_.Set("b", "2");
 
-    db.FlushDb();
+    db_.FlushDb();
 
-    EXPECT_FALSE(db.Exists("a").value());
-    EXPECT_FALSE(db.Exists("b").value());
+    EXPECT_FALSE(db_.Exists("a").value());
+    EXPECT_FALSE(db_.Exists("b").value());
 }
 
 TEST_F(DBEngineTest, KeysStarReturnsAllKeys) {
-    db.Set("a", "1");
-    db.Set("b", "2");
-    db.Set("c", "3");
+    db_.Set("a", "1");
+    db_.Set("b", "2");
+    db_.Set("c", "3");
 
-    auto result = db.Keys("*");
+    auto result = db_.Keys("*");
 
     ASSERT_TRUE(result.has_value());
     EXPECT_EQ(std::unordered_set<std::string>(result.value().begin(),
@@ -338,11 +338,11 @@ TEST_F(DBEngineTest, KeysStarReturnsAllKeys) {
 }
 
 TEST_F(DBEngineTest, KeysPrefixPatternReturnsMatchingKeys) {
-    db.Set("user:1", "Ann");
-    db.Set("user:2", "Bob");
-    db.Set("admin:1", "Root");
+    db_.Set("user:1", "Ann");
+    db_.Set("user:2", "Bob");
+    db_.Set("admin:1", "Root");
 
-    auto result = db.Keys("user:*");
+    auto result = db_.Keys("user:*");
 
     ASSERT_TRUE(result.has_value());
     EXPECT_EQ(std::unordered_set<std::string>(result.value().begin(),
@@ -351,11 +351,11 @@ TEST_F(DBEngineTest, KeysPrefixPatternReturnsMatchingKeys) {
 }
 
 TEST_F(DBEngineTest, KeysQuestionPatternMatchesOneCharacter) {
-    db.Set("key1", "a");
-    db.Set("key2", "b");
-    db.Set("key10", "c");
+    db_.Set("key1", "a");
+    db_.Set("key2", "b");
+    db_.Set("key10", "c");
 
-    auto result = db.Keys("key?");
+    auto result = db_.Keys("key?");
 
     ASSERT_TRUE(result.has_value());
     EXPECT_EQ(std::unordered_set<std::string>(result.value().begin(),
@@ -364,11 +364,11 @@ TEST_F(DBEngineTest, KeysQuestionPatternMatchesOneCharacter) {
 }
 
 TEST_F(DBEngineTest, KeysCharClassPatternMatchesSet) {
-    db.Set("file:a", "1");
-    db.Set("file:b", "2");
-    db.Set("file:c", "3");
+    db_.Set("file:a", "1");
+    db_.Set("file:b", "2");
+    db_.Set("file:c", "3");
 
-    auto result = db.Keys("file:[ab]");
+    auto result = db_.Keys("file:[ab]");
 
     ASSERT_TRUE(result.has_value());
     EXPECT_EQ(std::unordered_set<std::string>(result.value().begin(),
@@ -377,10 +377,10 @@ TEST_F(DBEngineTest, KeysCharClassPatternMatchesSet) {
 }
 
 TEST_F(DBEngineTest, KeysReturnsEmptyVectorWhenNothingMatches) {
-    db.Set("first", "1");
-    db.Set("second", "2");
+    db_.Set("first", "1");
+    db_.Set("second", "2");
 
-    auto result = db.Keys("missing:*");
+    auto result = db_.Keys("missing:*");
 
     ASSERT_TRUE(result.has_value());
     EXPECT_TRUE(result.value().empty());

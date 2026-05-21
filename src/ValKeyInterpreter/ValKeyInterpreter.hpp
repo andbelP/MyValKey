@@ -1,16 +1,15 @@
 #pragma once
 
-#include <unordered_map>
 #include <span>
 #include <string>
+#include <unordered_map>
 
-#include "Engine/DBEngine.hpp"
 #include "CommandResult/CommandResult.hpp"
+#include "Engine/DBEngine.hpp"
 
 namespace keyval {
 
 class ValKeyInterpreter {
-
     DBEngine& engine_;
 
     ValKeyResult Set(std::span<const std::string> args);
@@ -87,54 +86,55 @@ class ValKeyInterpreter {
 
     ValKeyResult Config(std::span<const std::string> args);
 
-    ValKeyResult ConfigMaxMemory(std::span<const std::string>args);
+    ValKeyResult ConfigMaxMemory(std::span<const std::string> args);
 
-    inline static const std::unordered_map<std::string, ValKeyResult (ValKeyInterpreter::*)(std::span<const std::string>)> methods_{
-        {"SET", &ValKeyInterpreter::Set},
-        {"GET", &ValKeyInterpreter::Get},
-        {"STRLEN", &ValKeyInterpreter::StrLen},
-        {"LPUSH", &ValKeyInterpreter::LPush},
-        {"RPUSH", &ValKeyInterpreter::RPush},
-        {"LPOP", &ValKeyInterpreter::LPop},
-        {"RPOP", &ValKeyInterpreter::RPop},
-        {"LLEN", &ValKeyInterpreter::LLen},
-        {"LRANGE", &ValKeyInterpreter::LRange},
-        {"LINDEX", &ValKeyInterpreter::LIndex},
-        {"LSET", &ValKeyInterpreter::LSet},
-        {"LINSERT", &ValKeyInterpreter::LInsert},
-        {"SADD", &ValKeyInterpreter::SAdd},
-        {"SREM", &ValKeyInterpreter::SRem},
-        {"SISMEMBER", &ValKeyInterpreter::SIsMember},
-        {"SMEMBERS", &ValKeyInterpreter::SMembers},
-        {"SCARD", &ValKeyInterpreter::SCard},
-        {"SUNION", &ValKeyInterpreter::SUnion},
-        {"SINTER", &ValKeyInterpreter::SInter},
-        {"SDIFF", &ValKeyInterpreter::SDiff},
-        {"SMOVE", &ValKeyInterpreter::SMove},
-        {"DEL", &ValKeyInterpreter::Del},
-        {"EXISTS", &ValKeyInterpreter::Exists},
-        {"TYPE", &ValKeyInterpreter::Type},
-        {"EXPIRE", &ValKeyInterpreter::Expire},
-        {"TTL", &ValKeyInterpreter::TTL},
-        {"KEYS", &ValKeyInterpreter::Keys},
-        {"FLUSHDB", &ValKeyInterpreter::FlushDB},
-        {"DBSIZE", &ValKeyInterpreter::DbSize},
-        {"MEMORY", &ValKeyInterpreter::MemoryUsage},
-        {"CONFIG", &ValKeyInterpreter::Config},
-        {"APPEND", &ValKeyInterpreter::Append},
-        {"GEOADD", &ValKeyInterpreter::GeoAdd},
-        {"GEOPOS", &ValKeyInterpreter::GeoPos},
-        {"GEODIST", &ValKeyInterpreter::GeoDist},
-        {"GEOSEARCH", &ValKeyInterpreter::GeoSearch},
-        {"GEOSEARCHSTORE", &ValKeyInterpreter::GeoSearchStore},
-    };
+    inline static const std::unordered_map<std::string,
+                                           ValKeyResult (ValKeyInterpreter::*)(
+                                               std::span<const std::string>)>
+        kMethods{
+            {"SET", &ValKeyInterpreter::Set},
+            {"GET", &ValKeyInterpreter::Get},
+            {"STRLEN", &ValKeyInterpreter::StrLen},
+            {"LPUSH", &ValKeyInterpreter::LPush},
+            {"RPUSH", &ValKeyInterpreter::RPush},
+            {"LPOP", &ValKeyInterpreter::LPop},
+            {"RPOP", &ValKeyInterpreter::RPop},
+            {"LLEN", &ValKeyInterpreter::LLen},
+            {"LRANGE", &ValKeyInterpreter::LRange},
+            {"LINDEX", &ValKeyInterpreter::LIndex},
+            {"LSET", &ValKeyInterpreter::LSet},
+            {"LINSERT", &ValKeyInterpreter::LInsert},
+            {"SADD", &ValKeyInterpreter::SAdd},
+            {"SREM", &ValKeyInterpreter::SRem},
+            {"SISMEMBER", &ValKeyInterpreter::SIsMember},
+            {"SMEMBERS", &ValKeyInterpreter::SMembers},
+            {"SCARD", &ValKeyInterpreter::SCard},
+            {"SUNION", &ValKeyInterpreter::SUnion},
+            {"SINTER", &ValKeyInterpreter::SInter},
+            {"SDIFF", &ValKeyInterpreter::SDiff},
+            {"SMOVE", &ValKeyInterpreter::SMove},
+            {"DEL", &ValKeyInterpreter::Del},
+            {"EXISTS", &ValKeyInterpreter::Exists},
+            {"TYPE", &ValKeyInterpreter::Type},
+            {"EXPIRE", &ValKeyInterpreter::Expire},
+            {"TTL", &ValKeyInterpreter::TTL},
+            {"KEYS", &ValKeyInterpreter::Keys},
+            {"FLUSHDB", &ValKeyInterpreter::FlushDB},
+            {"DBSIZE", &ValKeyInterpreter::DbSize},
+            {"MEMORY", &ValKeyInterpreter::MemoryUsage},
+            {"CONFIG", &ValKeyInterpreter::Config},
+            {"APPEND", &ValKeyInterpreter::Append},
+            {"GEOADD", &ValKeyInterpreter::GeoAdd},
+            {"GEOPOS", &ValKeyInterpreter::GeoPos},
+            {"GEODIST", &ValKeyInterpreter::GeoDist},
+            {"GEOSEARCH", &ValKeyInterpreter::GeoSearch},
+            {"GEOSEARCHSTORE", &ValKeyInterpreter::GeoSearchStore},
+        };
 
-public:
-
+   public:
     ValKeyResult Interpret(const ValKeyCommand& command);
 
     ValKeyInterpreter(DBEngine& engine) : engine_(engine) {}
-
 };
 
-}
+}  // namespace keyval

@@ -16,9 +16,9 @@ namespace keyval {
 
 ValKeyResult ValKeyInterpreter::Interpret(const ValKeyCommand& command) {
     auto command_type = ToUpper(command.type);
-    auto it = methods_.find(command_type);
+    auto it = kMethods.find(command_type);
 
-    if (it == methods_.end()) {
+    if (it == kMethods.end()) {
         return ValKeyError{"unknown command " + command.type};
     }
 

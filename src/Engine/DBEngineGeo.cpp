@@ -30,8 +30,8 @@ double ConvertUnitsFromKm(double distance_km, GeoUnit unit) {
 }
 
 double ToRadians(double degrees) {
-    const double kPi = 3.14159265358979323846;
-    return degrees * kPi / 180.0;
+    const double pi = 3.14159265358979323846;
+    return degrees * pi / 180.0;
 }
 
 double HaversinFormulaKm(GeoPoint first, GeoPoint second) {
