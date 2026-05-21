@@ -1,3 +1,11 @@
+#include <climits>
+#include <cstddef>
+#include <span>
+#include <string>
+#include <vector>
+
+#include "CommandResult/CommandResult.hpp"
+#include "Engine/DBEngine.hpp"
 #include "Utils.hpp"
 #include "ValKeyInterpreter.hpp"
 
@@ -154,8 +162,8 @@ ValKeyResult ValKeyInterpreter::GeoSearch(std::span<const std::string> args) {
         }
     }
 
-    if(args.size()==9){
-        if(ToUpper(args[7])!="COUNT"){
+    if (args.size() == 9) {
+        if (ToUpper(args[7]) != "COUNT") {
             return ValKeyError{"invalid syntax"};
         }
         auto count_res = ParseInt(args[8]);
@@ -165,7 +173,7 @@ ValKeyResult ValKeyInterpreter::GeoSearch(std::span<const std::string> args) {
         count = count_res.value();
     }
 
-    if(args.size()==10){
+    if (args.size() == 10) {
         if (ToUpper(args[7]) == "ASC") {
             ascending = true;
         } else if (ToUpper(args[7]) == "DESC") {
@@ -173,7 +181,7 @@ ValKeyResult ValKeyInterpreter::GeoSearch(std::span<const std::string> args) {
         } else {
             return ValKeyError{"invalid syntax"};
         }
-        if(ToUpper(args[8])!="COUNT"){
+        if (ToUpper(args[8]) != "COUNT") {
             return ValKeyError{"invalid syntax"};
         }
         auto count_res = ParseInt(args[9]);
@@ -183,10 +191,9 @@ ValKeyResult ValKeyInterpreter::GeoSearch(std::span<const std::string> args) {
         count = count_res.value();
     }
 
-    if(count < 0){
+    if (count < 0) {
         return ValKeyError{"invalid count value"};
     }
-    
 
     auto res = engine_.GeoSearch(key, GeoPoint{latitude, longitude}, radius,
                                  unit, count, ascending);
@@ -203,9 +210,8 @@ ValKeyResult ValKeyInterpreter::GeoSearch(std::span<const std::string> args) {
     return ans;
 }
 
-
-
-ValKeyResult ValKeyInterpreter::GeoSearchStore(std::span<const std::string> args) {
+ValKeyResult ValKeyInterpreter::GeoSearchStore(
+    std::span<const std::string> args) {
     if (args.size() < 8) {
         return ValKeyError{"wrong number of arguments"};
     }
@@ -255,7 +261,7 @@ ValKeyResult ValKeyInterpreter::GeoSearchStore(std::span<const std::string> args
     bool ascending = true;
     std::size_t count = LLONG_MAX;
 
-    if(args.size() == 9){
+    if (args.size() == 9) {
         if (ToUpper(args[8]) == "ASC") {
             ascending = true;
         } else if (ToUpper(args[8]) == "DESC") {
@@ -265,8 +271,8 @@ ValKeyResult ValKeyInterpreter::GeoSearchStore(std::span<const std::string> args
         }
     }
 
-    if(args.size() == 10){
-        if(ToUpper(args[8])!="COUNT"){
+    if (args.size() == 10) {
+        if (ToUpper(args[8]) != "COUNT") {
             return ValKeyError{"invalid syntax"};
         }
         auto count_res = ParseInt(args[9]);
@@ -276,7 +282,7 @@ ValKeyResult ValKeyInterpreter::GeoSearchStore(std::span<const std::string> args
         count = count_res.value();
     }
 
-    if(args.size() == 11){
+    if (args.size() == 11) {
         if (ToUpper(args[8]) == "ASC") {
             ascending = true;
         } else if (ToUpper(args[8]) == "DESC") {
@@ -284,7 +290,7 @@ ValKeyResult ValKeyInterpreter::GeoSearchStore(std::span<const std::string> args
         } else {
             return ValKeyError{"invalid syntax"};
         }
-        if(ToUpper(args[9])!="COUNT"){
+        if (ToUpper(args[9]) != "COUNT") {
             return ValKeyError{"invalid syntax"};
         }
         auto count_res = ParseInt(args[10]);
@@ -294,16 +300,16 @@ ValKeyResult ValKeyInterpreter::GeoSearchStore(std::span<const std::string> args
         count = count_res.value();
     }
 
-    if(count < 0){
+    if (count < 0) {
         return ValKeyError{"invalid count value"};
     }
 
-    auto res = engine_.GeoSearchStore(dest, source, GeoPoint{latitude, longitude}, radius,
-                                 unit, count, ascending);
+    auto res =
+        engine_.GeoSearchStore(dest, source, GeoPoint{latitude, longitude},
+                               radius, unit, count, ascending);
     if (!res.has_value()) {
         return ValKeyError{res.error().description};
     }
-
 
     return Ok{};
 }

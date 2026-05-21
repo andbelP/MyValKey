@@ -1,16 +1,17 @@
 #pragma once
 
 #include <chrono>
+#include <cstddef>
 #include <cstdint>
 #include <expected>
 #include <list>
-#include <memory>
 #include <optional>
 #include <span>
 #include <string>
 #include <string_view>
 #include <unordered_map>
 #include <unordered_set>
+#include <utility>
 #include <variant>
 #include <vector>
 
@@ -19,18 +20,12 @@
 
 namespace keyval {
 
-
-struct GeoPoint{
+struct GeoPoint {
     double latitude;
     double longitude;
 };
 
-enum class GeoUnit{
-    kMeter,
-    kKilometer,
-    kMile,
-    kFoot
-};
+enum class GeoUnit { kMeter, kKilometer, kMile, kFoot };
 
 using GeoEntry = std::unordered_map<std::string, GeoPoint>;
 
@@ -57,10 +52,10 @@ class DBEngine {
     bool DeleteIfExpired(std::string_view it);
     void DeleteIfExpiredAll();
 
-    std::expected<size_t, error::Error> MemoryUsageOfEntry(const StorageEntry& entry);
+    std::expected<std::size_t, error::Error> MemoryUsageOfEntry(
+        const StorageEntry& entry);
 
     bool CanAddBytes(std::size_t cnt);
-
 
    public:
     std::expected<void, error::Error> Set(std::string_view key,
@@ -96,8 +91,8 @@ class DBEngine {
                                            std::string_view value);
 
     std::expected<void, error::Error> LInsert(std::string_view key,
-                                                     std::ptrdiff_t index,
-                                                     std::string_view value);
+                                              std::ptrdiff_t index,
+                                              std::string_view value);
 
     std::expected<void, error::Error> SCreate(std::string_view key);
 
@@ -128,15 +123,25 @@ class DBEngine {
                                             std::string_view destination,
                                             std::string_view member);
 
-    std::expected<void, error::Error> GeoAdd(std::string_view key, std::string_view member, GeoPoint point);
+    std::expected<void, error::Error> GeoAdd(std::string_view key,
+                                             std::string_view member,
+                                             GeoPoint point);
 
-    std::expected<GeoPoint, error::Error> GeoPos(std::string_view key, std::string_view member);
+    std::expected<GeoPoint, error::Error> GeoPos(std::string_view key,
+                                                 std::string_view member);
 
-    std::expected<double, error::Error> GeoDist(std::string_view key, std::string_view member1, std::string_view member2, GeoUnit unit);
+    std::expected<double, error::Error> GeoDist(std::string_view key,
+                                                std::string_view member1,
+                                                std::string_view member2,
+                                                GeoUnit unit);
 
-    std::expected<std::vector<GeoPoint>, error::Error> GeoSearch(std::string_view key, GeoPoint center, double radius, GeoUnit unit, std::size_t count, bool ascending = true);
-    
-    std::expected<std::vector<GeoPoint>, error::Error> GeoSearchStore(std::string_view dest, std::string_view source, GeoPoint center, double radius, GeoUnit unit, std::size_t count, bool ascending = true);
+    std::expected<std::vector<GeoPoint>, error::Error> GeoSearch(
+        std::string_view key, GeoPoint center, double radius, GeoUnit unit,
+        std::size_t count, bool ascending = true);
+
+    std::expected<std::vector<GeoPoint>, error::Error> GeoSearchStore(
+        std::string_view dest, std::string_view source, GeoPoint center,
+        double radius, GeoUnit unit, std::size_t count, bool ascending = true);
 
     std::expected<void, error::Error> Del(std::string_view key);
 
@@ -154,11 +159,13 @@ class DBEngine {
         std::string_view pattern);
 
     std::size_t EntryCount();
-    std::expected<size_t, error::Error> MemoryUsageOfKey(std::string_view key);
+    std::expected<std::size_t, error::Error> MemoryUsageOfKey(
+        std::string_view key);
 
     void FlushDb();
 
-    std::expected<void, error::Error> SetMaxMemoryUsage(std::size_t max_memory_usage);
+    std::expected<void, error::Error> SetMaxMemoryUsage(
+        std::size_t max_memory_usage);
 
     std::optional<std::size_t> GetMaxMemoryUsage() const;
 

@@ -1,10 +1,18 @@
+#include <chrono>
+#include <cstddef>
+#include <expected>
+#include <list>
+#include <optional>
+#include <string>
+#include <string_view>
+#include <unordered_set>
+#include <vector>
+
 #include "Engine/DBEngine.hpp"
-
-#include <algorithm>
-#include <ranges>
-
-#include "Glob/GlobMatcher.hpp"
+#include "Engine/StorageTypes.hpp"
 #include "Engine/TypesSizes.hpp"
+#include "ErrorsHandling/Error.hpp"
+#include "Glob/GlobMatcher.hpp"
 
 namespace keyval {
 
@@ -85,12 +93,12 @@ std::expected<std::vector<std::string>, error::Error> DBEngine::Keys(
 
 void DBEngine::FlushDb() { storage_.clear(); }
 
-size_t DBEngine::EntryCount() {
+std::size_t DBEngine::EntryCount() {
     DeleteIfExpiredAll();
     return storage_.size();
 }
 
-std::expected<size_t, error::Error> DBEngine::MemoryUsageOfKey(
+std::expected<std::size_t, error::Error> DBEngine::MemoryUsageOfKey(
     std::string_view key) {
     DeleteIfExpired(key);
 
@@ -103,7 +111,7 @@ std::expected<size_t, error::Error> DBEngine::MemoryUsageOfKey(
     return MemoryUsageOfEntry(entry);
 }
 
-std::expected<size_t, error::Error> DBEngine::MemoryUsageOfEntry(
+std::expected<std::size_t, error::Error> DBEngine::MemoryUsageOfEntry(
     const StorageEntry& entry) {
     switch (entry.type) {
         case StorageType::kString:
@@ -116,8 +124,8 @@ std::expected<size_t, error::Error> DBEngine::MemoryUsageOfEntry(
         case StorageType::kGeo:
             return GetSizeOfGeoEntry(std::get<GeoEntry>(entry.value));
     }
-    return std::unexpected(
-        error::Error{error::ErrorCode::kUndefinedError, "Unknown storage type"});
+    return std::unexpected(error::Error{error::ErrorCode::kUndefinedError,
+                                        "Unknown storage type"});
 }
 
 bool DBEngine::DeleteIfExpired(std::string_view key) {
@@ -153,7 +161,7 @@ std::expected<void, error::Error> DBEngine::SetMaxMemoryUsage(
             error::ErrorCode::kInvalidCommand,
             "New max memory usage is less than current memory usage"});
     }
-    if(bytes==0){
+    if (bytes == 0) {
         return {};
     }
     max_memory_usage_ = bytes;
@@ -165,18 +173,15 @@ std::optional<std::size_t> DBEngine::GetMaxMemoryUsage() const {
 }
 
 std::size_t DBEngine::GetCurrentMemoryUsage() {
-    std::size_t current_memory_usage_ = 0;
+    std::size_t current_memory_usage = 0;
     for (auto& el : storage_) {
         auto result = MemoryUsageOfEntry(el.second);
-        if (!result) {
-            current_memory_usage_ += 0;
-        } else {
-            current_memory_usage_ += result.value();
+        if (result) {
+            current_memory_usage += result.value();
         }
     }
-    return current_memory_usage_;
+    return current_memory_usage;
 }
-
 
 bool DBEngine::CanAddBytes(std::size_t cnt) {
     if (!max_memory_usage_.has_value()) {
@@ -188,6 +193,5 @@ bool DBEngine::CanAddBytes(std::size_t cnt) {
     }
     return true;
 }
-
 
 }  // namespace keyval
