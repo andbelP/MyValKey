@@ -107,15 +107,15 @@ ValKeyResult ValKeyInterpreter::GeoSearch(std::span<const std::string> args) {
 
     auto center_res = ParseDouble(args[2]);
     if (!center_res.has_value()) {
-        return ValKeyError{"invalid latitude value"};
-    }
-    double latitude = center_res.value();
-
-    center_res = ParseDouble(args[3]);
-    if (!center_res.has_value()) {
         return ValKeyError{"invalid longitude value"};
     }
     double longitude = center_res.value();
+
+    center_res = ParseDouble(args[3]);
+    if (!center_res.has_value()) {
+        return ValKeyError{"invalid latitude value"};
+    }
+    double latitude = center_res.value();
 
     if (args[4] != "BYRADIUS") {
         return ValKeyError{"invalid syntax"};
@@ -145,9 +145,9 @@ ValKeyResult ValKeyInterpreter::GeoSearch(std::span<const std::string> args) {
     std::size_t count = LLONG_MAX;
 
     if (args.size() == 8) {
-        if (args[7] == "ASC") {
+        if (ToUpper(args[7]) == "ASC") {
             ascending = true;
-        } else if (args[7] == "DESC") {
+        } else if (ToUpper(args[7]) == "DESC") {
             ascending = false;
         } else {
             return ValKeyError{"invalid syntax"};
@@ -155,7 +155,7 @@ ValKeyResult ValKeyInterpreter::GeoSearch(std::span<const std::string> args) {
     }
 
     if(args.size()==9){
-        if(args[7]!="COUNT"){
+        if(ToUpper(args[7])!="COUNT"){
             return ValKeyError{"invalid syntax"};
         }
         auto count_res = ParseInt(args[8]);
@@ -166,14 +166,14 @@ ValKeyResult ValKeyInterpreter::GeoSearch(std::span<const std::string> args) {
     }
 
     if(args.size()==10){
-        if (args[7] == "ASC") {
+        if (ToUpper(args[7]) == "ASC") {
             ascending = true;
-        } else if (args[7] == "DESC") {
+        } else if (ToUpper(args[7]) == "DESC") {
             ascending = false;
         } else {
             return ValKeyError{"invalid syntax"};
         }
-        if(args[8]!="COUNT"){
+        if(ToUpper(args[8])!="COUNT"){
             return ValKeyError{"invalid syntax"};
         }
         auto count_res = ParseInt(args[9]);
@@ -181,6 +181,10 @@ ValKeyResult ValKeyInterpreter::GeoSearch(std::span<const std::string> args) {
             return ValKeyError{"invalid count value"};
         }
         count = count_res.value();
+    }
+
+    if(count < 0){
+        return ValKeyError{"invalid count value"};
     }
     
 
@@ -214,17 +218,17 @@ ValKeyResult ValKeyInterpreter::GeoSearchStore(std::span<const std::string> args
 
     auto center_res = ParseDouble(args[3]);
     if (!center_res.has_value()) {
-        return ValKeyError{"invalid latitude value"};
-    }
-    double latitude = center_res.value();
-
-    center_res = ParseDouble(args[4]);
-    if (!center_res.has_value()) {
         return ValKeyError{"invalid longitude value"};
     }
     double longitude = center_res.value();
 
-    if (args[5] != "BYRADIUS") {
+    center_res = ParseDouble(args[4]);
+    if (!center_res.has_value()) {
+        return ValKeyError{"invalid latitude value"};
+    }
+    double latitude = center_res.value();
+
+    if (ToUpper(args[5]) != "BYRADIUS") {
         return ValKeyError{"invalid syntax"};
     }
 
@@ -252,9 +256,9 @@ ValKeyResult ValKeyInterpreter::GeoSearchStore(std::span<const std::string> args
     std::size_t count = LLONG_MAX;
 
     if(args.size() == 9){
-        if (args[8] == "ASC") {
+        if (ToUpper(args[8]) == "ASC") {
             ascending = true;
-        } else if (args[8] == "DESC") {
+        } else if (ToUpper(args[8]) == "DESC") {
             ascending = false;
         } else {
             return ValKeyError{"invalid syntax"};
@@ -262,7 +266,7 @@ ValKeyResult ValKeyInterpreter::GeoSearchStore(std::span<const std::string> args
     }
 
     if(args.size() == 10){
-        if(args[8]!="COUNT"){
+        if(ToUpper(args[8])!="COUNT"){
             return ValKeyError{"invalid syntax"};
         }
         auto count_res = ParseInt(args[9]);
@@ -273,14 +277,14 @@ ValKeyResult ValKeyInterpreter::GeoSearchStore(std::span<const std::string> args
     }
 
     if(args.size() == 11){
-        if (args[8] == "ASC") {
+        if (ToUpper(args[8]) == "ASC") {
             ascending = true;
-        } else if (args[8] == "DESC") {
+        } else if (ToUpper(args[8]) == "DESC") {
             ascending = false;
         } else {
             return ValKeyError{"invalid syntax"};
         }
-        if(args[9]!="COUNT"){
+        if(ToUpper(args[9])!="COUNT"){
             return ValKeyError{"invalid syntax"};
         }
         auto count_res = ParseInt(args[10]);
@@ -288,6 +292,10 @@ ValKeyResult ValKeyInterpreter::GeoSearchStore(std::span<const std::string> args
             return ValKeyError{"invalid count value"};
         }
         count = count_res.value();
+    }
+
+    if(count < 0){
+        return ValKeyError{"invalid count value"};
     }
 
     auto res = engine_.GeoSearchStore(dest, source, GeoPoint{latitude, longitude}, radius,

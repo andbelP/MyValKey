@@ -219,7 +219,7 @@ std::expected<std::vector<GeoPoint>, error::Error> DBEngine::GeoSearchStore(
     for (auto& el : geo) {
         double distance =
             ConvertUnitsFromKm(HaversinFormulaKm(center, el.second), unit);
-        if (distance < radius) {
+        if (distance <= radius) {
             items.push_back({el.first, el.second, distance});
         }
     }
@@ -242,7 +242,7 @@ std::expected<std::vector<GeoPoint>, error::Error> DBEngine::GeoSearchStore(
 
 
     GeoEntry result;
-    for (std::size_t i = 0; i < items.size() && i <= count; i++) {
+    for (std::size_t i = 0; i < items.size() && i < count; i++) {
         result[items[i].member] = items[i].point;
     }
 
