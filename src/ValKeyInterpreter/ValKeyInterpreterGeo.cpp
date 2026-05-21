@@ -39,6 +39,10 @@ ValKeyResult ValKeyInterpreter::GeoAdd(std::span<const std::string> args) {
 
         auto res = engine_.GeoAdd(key, member, GeoPoint{latitude, longitude});
         if (!res.has_value()) {
+            if (res.error().code == error::ErrorCode::kMaxMemoryExceeded) {
+                return ValKeyError{
+                    "OOM command not allowed when used memory > 'maxmemory'"};
+            }
             return ValKeyError{res.error().description};
         }
     }
@@ -58,6 +62,15 @@ ValKeyResult ValKeyInterpreter::GeoPos(std::span<const std::string> args) {
     for (const auto& member : members) {
         auto res = engine_.GeoPos(key, member);
         if (!res.has_value()) {
+            if (res.error().code == error::ErrorCode::kMaxMemoryExceeded) {
+                return ValKeyError{
+                    "OOM command not allowed when used memory > 'maxmemory'"};
+            }
+            if (res.error().code == error::ErrorCode::kKeyNotFound ||
+                res.error().code == error::ErrorCode::kInvalidCommand) {
+                result.push_back("null");
+                continue;
+            }
             return ValKeyError{res.error().description};
         }
         result.push_back(std::to_string(res.value().longitude) + "," +
@@ -170,6 +183,9 @@ ValKeyResult ValKeyInterpreter::GeoSearch(std::span<const std::string> args) {
         if (!count_res.has_value()) {
             return ValKeyError{"invalid count value"};
         }
+        if(count_res.value() < 0) {
+            return ValKeyError{"invalid count value"};
+        }
         count = count_res.value();
     }
 
@@ -188,11 +204,10 @@ ValKeyResult ValKeyInterpreter::GeoSearch(std::span<const std::string> args) {
         if (!count_res.has_value()) {
             return ValKeyError{"invalid count value"};
         }
+        if(count_res.value() < 0) {
+            return ValKeyError{"invalid count value"};
+        }
         count = count_res.value();
-    }
-
-    if (count < 0) {
-        return ValKeyError{"invalid count value"};
     }
 
     auto res = engine_.GeoSearch(key, GeoPoint{latitude, longitude}, radius,
@@ -203,7 +218,8 @@ ValKeyResult ValKeyInterpreter::GeoSearch(std::span<const std::string> args) {
 
     std::vector<std::string> ans;
     for (const auto& point : res.value()) {
-        ans.push_back(point.member + "," + std::to_string(point.point.latitude) + "," +
+        ans.push_back(point.member + "," +
+                      std::to_string(point.point.latitude) + "," +
                       std::to_string(point.point.longitude));
     }
 

@@ -10,7 +10,7 @@
 
 using namespace keyval;
 
-class DBEngineTest : public ::testing::Test {
+class DBEngineTest : public testing::Test {
    public:
     DBEngine db_;
 

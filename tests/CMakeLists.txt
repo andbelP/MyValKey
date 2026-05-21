@@ -17,6 +17,7 @@ add_executable(
     EngineTests
     DBEngineTests.cpp
     GlobMatcherTests.cpp
+    InterpretatorTests.cpp
 )
 
 target_link_libraries(

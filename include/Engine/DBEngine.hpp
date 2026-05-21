@@ -45,9 +45,10 @@ struct StorageEntry {
 
     StorageEntry() = default;
 
-    StorageEntry(ValueType&& val, StorageType t)
-        : value(std::move(val)),
-          type(t) {}  // TODO: add forwarding reference to constructor
+    template<typename ValueTypeT>
+    StorageEntry(ValueTypeT&& val, StorageType t)
+        : value(std::forward<ValueTypeT>(val)),
+          type(t) {}
 };
 
 class DBEngine {
