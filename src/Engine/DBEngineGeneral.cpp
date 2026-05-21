@@ -156,13 +156,14 @@ void DBEngine::DeleteIfExpiredAll() {
 
 std::expected<void, error::Error> DBEngine::SetMaxMemoryUsage(
     std::size_t bytes) {
+    if (bytes == 0) {
+        max_memory_usage_ = std::nullopt;
+        return {};
+    }
     if (bytes < GetCurrentMemoryUsage()) {
         return std::unexpected(error::Error{
             error::ErrorCode::kInvalidCommand,
             "New max memory usage is less than current memory usage"});
-    }
-    if (bytes == 0) {
-        return {};
     }
     max_memory_usage_ = bytes;
     return {};
