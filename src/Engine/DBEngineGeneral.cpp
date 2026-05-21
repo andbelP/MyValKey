@@ -173,6 +173,9 @@ std::optional<std::size_t> DBEngine::GetMaxMemoryUsage() const {
 }
 
 std::size_t DBEngine::GetCurrentMemoryUsage() {
+
+    DeleteIfExpiredAll();
+
     std::size_t current_memory_usage = 0;
     for (auto& el : storage_) {
         auto result = MemoryUsageOfEntry(el.second);

@@ -89,6 +89,8 @@ ValKeyResult ValKeyInterpreter::Type(std::span<const std::string> args) {
             return "list";
         case StorageType::kSet:
             return "set";
+        case StorageType::kGeo:
+            return "geo";
     }
 
     return "undefined type";

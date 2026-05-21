@@ -93,7 +93,6 @@ std::expected<void, error::Error> DBEngine::Append(std::string_view key,
         }
 
         it->second.value = old_value + std::string(value);
-        it->second.expire_time = std::nullopt;
 
     } else {
         if (max_memory_usage_.has_value() &&
