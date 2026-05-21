@@ -1,8 +1,15 @@
-#include "Engine/DBEngine.hpp"
-#include "Engine/TypesSizes.hpp"
-#include <algorithm>
-#include <ranges>
+#include <cstddef>
+#include <expected>
+#include <span>
+#include <string>
+#include <string_view>
+#include <unordered_set>
+#include <utility>
 
+#include "Engine/DBEngine.hpp"
+#include "Engine/StorageTypes.hpp"
+#include "Engine/TypesSizes.hpp"
+#include "ErrorsHandling/Error.hpp"
 
 namespace keyval {
 
@@ -18,10 +25,13 @@ std::expected<void, error::Error> DBEngine::SAdd(std::string_view key,
                              "DB entry already exists with different type"});
         }
 
-        if(max_memory_usage_.has_value() && !std::get<std::unordered_set<std::string>>(it->second.value).contains(std::string(member)) && !CanAddBytes(GetSizeOfString(std::string(member)))) {
-            return std::unexpected(error::Error{
-                error::ErrorCode::kMaxMemoryExceeded,
-                "Cannot add member: max memory usage exceeded"});
+        if (max_memory_usage_.has_value() &&
+            !std::get<std::unordered_set<std::string>>(it->second.value)
+                 .contains(std::string(member)) &&
+            !CanAddBytes(GetSizeOfString(std::string(member)))) {
+            return std::unexpected(
+                error::Error{error::ErrorCode::kMaxMemoryExceeded,
+                             "Cannot add member: max memory usage exceeded"});
         }
 
         std::get<std::unordered_set<std::string>>(it->second.value)
@@ -30,10 +40,10 @@ std::expected<void, error::Error> DBEngine::SAdd(std::string_view key,
         std::unordered_set<std::string> s;
         s.insert(std::string(member));
 
-        if(max_memory_usage_.has_value() && !CanAddBytes(GetSizeOfSet(s))) {
-            return std::unexpected(error::Error{
-                error::ErrorCode::kMaxMemoryExceeded,
-                "Cannot add member: max memory usage exceeded"});
+        if (max_memory_usage_.has_value() && !CanAddBytes(GetSizeOfSet(s))) {
+            return std::unexpected(
+                error::Error{error::ErrorCode::kMaxMemoryExceeded,
+                             "Cannot add member: max memory usage exceeded"});
         }
 
         storage_[std::string(key)] =
@@ -52,13 +62,15 @@ std::expected<void, error::Error> DBEngine::SCreate(std::string_view key) {
                          "DB entry already exists, cant create set"});
     }
 
-    if(max_memory_usage_.has_value() && !CanAddBytes(GetSizeOfSet(std::unordered_set<std::string>{}))) {
-        return std::unexpected(error::Error{
-            error::ErrorCode::kMaxMemoryExceeded,
-            "Cannot create set: max memory usage exceeded"});
+    if (max_memory_usage_.has_value() &&
+        !CanAddBytes(GetSizeOfSet(std::unordered_set<std::string>{}))) {
+        return std::unexpected(
+            error::Error{error::ErrorCode::kMaxMemoryExceeded,
+                         "Cannot create set: max memory usage exceeded"});
     }
 
-    storage_[std::string(key)] = StorageEntry(std::unordered_set<std::string>{}, StorageType::kSet);
+    storage_[std::string(key)] =
+        StorageEntry(std::unordered_set<std::string>{}, StorageType::kSet);
     return {};
 }
 
@@ -324,4 +336,4 @@ std::expected<std::size_t, error::Error> DBEngine::SCard(std::string_view key) {
     return std::get<std::unordered_set<std::string>>(it->second.value).size();
 }
 
-}
+}  // namespace keyval

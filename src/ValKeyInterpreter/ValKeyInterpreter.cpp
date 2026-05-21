@@ -1,14 +1,16 @@
 #include "ValKeyInterpreter.hpp"
-#include "Utils.hpp"
 
-#include <algorithm>
-#include <cctype>
-#include <cstdint>
-#include <exception>
-#include <expected>
+#include <chrono>
+#include <cstddef>
+#include <span>
 #include <string>
-#include <unordered_set>
+#include <unordered_map>
 #include <vector>
+
+#include "CommandResult/CommandResult.hpp"
+#include "Engine/StorageTypes.hpp"
+#include "ErrorsHandling/Error.hpp"
+#include "Utils.hpp"
 
 namespace keyval {
 
@@ -101,12 +103,12 @@ ValKeyResult ValKeyInterpreter::Expire(std::span<const std::string> args) {
     if (!ttl_result.has_value() || ttl_result.value() < 0) {
         return ValKeyError{ttl_result.error()};
     }
-    auto result = engine_.Expire(args[0], std::chrono::seconds(ttl_result.value()));
+    auto result =
+        engine_.Expire(args[0], std::chrono::seconds(ttl_result.value()));
     if (!result.has_value()) {
         return ValKeyError{result.error().description};
     }
     return Ok{};
-
 }
 
 ValKeyResult ValKeyInterpreter::TTL(std::span<const std::string> args) {
@@ -127,7 +129,6 @@ ValKeyResult ValKeyInterpreter::TTL(std::span<const std::string> args) {
     }
 
     return std::to_string(result.value().value());
-
 }
 
 ValKeyResult ValKeyInterpreter::Keys(std::span<const std::string> args) {
@@ -151,7 +152,6 @@ ValKeyResult ValKeyInterpreter::FlushDB(std::span<const std::string> args) {
 
     engine_.FlushDb();
     return Ok{};
-
 }
 
 ValKeyResult ValKeyInterpreter::DbSize(std::span<const std::string> args) {
@@ -178,48 +178,49 @@ ValKeyResult ValKeyInterpreter::MemoryUsage(std::span<const std::string> args) {
 }
 
 ValKeyResult ValKeyInterpreter::Config(std::span<const std::string> args) {
-    static const std::unordered_map<std::string, ValKeyResult (ValKeyInterpreter::*)(std::span<const std::string>args)> methods {
-        {"MAXMEMORY", &ValKeyInterpreter::ConfigMaxMemory}
-    };
+    static const std::unordered_map<std::string,
+                                    ValKeyResult (ValKeyInterpreter::*)(
+                                        std::span<const std::string> args)>
+        kMethods{{"MAXMEMORY", &ValKeyInterpreter::ConfigMaxMemory}};
 
-    if(args.size() < 2){
+    if (args.size() < 2) {
         return ValKeyError{"undefined command"};
     }
 
-    auto it = methods.find(ToUpper(args[1]));
-    if(it == methods.end()){
+    auto it = kMethods.find(ToUpper(args[1]));
+    if (it == kMethods.end()) {
         return ValKeyError{"unknown config parameter: " + args[1]};
     }
 
     return (this->*(it->second))(args);
 }
 
-ValKeyResult ValKeyInterpreter::ConfigMaxMemory(std::span<const std::string> args) {
-    
-    if(args.size() == 2 && ToUpper(args[0])=="GET" && ToUpper(args[1]) == "MAXMEMORY"){
-        if(engine_.GetMaxMemoryUsage().has_value()){
+ValKeyResult ValKeyInterpreter::ConfigMaxMemory(
+    std::span<const std::string> args) {
+    if (args.size() == 2 && ToUpper(args[0]) == "GET" &&
+        ToUpper(args[1]) == "MAXMEMORY") {
+        if (engine_.GetMaxMemoryUsage().has_value()) {
             return std::to_string(engine_.GetMaxMemoryUsage().value());
-        }
-        else{
+        } else {
             return ValKeyError{"maxmemory is not set"};
         }
-    }
-    else if(args.size() == 3 && ToUpper(args[0])=="SET" && ToUpper(args[1]) == "MAXMEMORY"){
+    } else if (args.size() == 3 && ToUpper(args[0]) == "SET" &&
+               ToUpper(args[1]) == "MAXMEMORY") {
         auto memory_result = ParseMemorySize(args[2]);
-        if(!memory_result.has_value()){
+        if (!memory_result.has_value()) {
             return ValKeyError{memory_result.error()};
         }
-        
+
         auto result = engine_.SetMaxMemoryUsage(memory_result.value());
-        if(!result.has_value()){
+        if (!result.has_value()) {
             return ValKeyError{result.error().description};
         }
         return Ok{};
-    }
-    else{
-        return ValKeyError{"invalid command. try CONFIG GET maxmemory or CONFIG SET maxmemory <cnt>"};
+    } else {
+        return ValKeyError{
+            "invalid command. try CONFIG GET maxmemory or CONFIG SET maxmemory "
+            "<cnt>"};
     }
 }
-
 
 }  // namespace keyval

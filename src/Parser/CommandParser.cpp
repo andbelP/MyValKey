@@ -1,7 +1,9 @@
 #include "CommandParser.hpp"
+
 #include <sstream>
 #include <string>
 
+#include "CommandResult/CommandResult.hpp"
 
 namespace keyval {
 
@@ -16,4 +18,4 @@ ValKeyCommand CommandParser::Parse(const std::string& line) {
     return command;
 }
 
-}
+}  // namespace keyval
