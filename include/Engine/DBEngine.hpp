@@ -19,8 +19,23 @@
 
 namespace keyval {
 
+
+struct GeoPoint{
+    double latitude;
+    double longitude;
+};
+
+enum class GeoUnit{
+    kMeter,
+    kKilometer,
+    kMile,
+    kFoot
+};
+
+using GeoEntry = std::unordered_map<std::string, GeoPoint>;
+
 using ValueType = std::variant<std::string, std::list<std::string>,
-                               std::unordered_set<std::string>>;
+                               std::unordered_set<std::string>, GeoEntry>;
 
 struct StorageEntry {
     ValueType value;
@@ -113,6 +128,15 @@ class DBEngine {
                                             std::string_view destination,
                                             std::string_view member);
 
+    std::expected<void, error::Error> GeoAdd(std::string_view key, std::string_view member, GeoPoint point);
+
+    std::expected<GeoPoint, error::Error> GeoPos(std::string_view key, std::string_view member);
+
+    std::expected<double, error::Error> GeoDist(std::string_view key, std::string_view member1, std::string_view member2, GeoUnit unit);
+
+    std::expected<std::vector<GeoPoint>, error::Error> GeoSearch(std::string_view key, GeoPoint center, double radius, GeoUnit unit, std::size_t count, bool ascending = true);
+    
+    std::expected<std::vector<GeoPoint>, error::Error> GeoSearchStore(std::string_view dest, std::string_view source, GeoPoint center, double radius, GeoUnit unit, std::size_t count, bool ascending = true);
 
     std::expected<void, error::Error> Del(std::string_view key);
 

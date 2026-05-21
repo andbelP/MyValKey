@@ -385,3 +385,243 @@ TEST_F(DBEngineTest, KeysReturnsEmptyVectorWhenNothingMatches) {
     ASSERT_TRUE(result.has_value());
     EXPECT_TRUE(result.value().empty());
 }
+
+TEST_F(DBEngineTest, GeoAddCreatesGeoIndex) {
+    keyval::DBEngine engine;
+
+    auto result = engine.GeoAdd("cities", "Moscow", keyval::GeoPoint{55.7558, 37.6173});
+
+    ASSERT_TRUE(result.has_value());
+
+    auto type = engine.Type("cities");
+    ASSERT_TRUE(type.has_value());
+    EXPECT_EQ(type.value(), StorageType::kGeo);
+}
+
+TEST_F(DBEngineTest, GeoPosReturnsStoredPoint) {
+    keyval::DBEngine engine;
+
+    ASSERT_TRUE(engine.GeoAdd("cities", "Moscow", keyval::GeoPoint{55.7558, 37.6173}).has_value());
+
+    auto result = engine.GeoPos("cities", "Moscow");
+
+    ASSERT_TRUE(result.has_value());
+    EXPECT_DOUBLE_EQ(result.value().latitude, 55.7558);
+    EXPECT_DOUBLE_EQ(result.value().longitude, 37.6173);
+}
+
+TEST_F(DBEngineTest, GeoAddUpdatesExistingMember) {
+    keyval::DBEngine engine;
+
+    ASSERT_TRUE(engine.GeoAdd("cities", "Moscow", keyval::GeoPoint{55.7558, 37.6173}).has_value());
+    ASSERT_TRUE(engine.GeoAdd("cities", "Moscow", keyval::GeoPoint{55.0, 37.0}).has_value());
+
+    auto result = engine.GeoPos("cities", "Moscow");
+
+    ASSERT_TRUE(result.has_value());
+    EXPECT_DOUBLE_EQ(result.value().latitude, 55.0);
+    EXPECT_DOUBLE_EQ(result.value().longitude, 37.0);
+}
+
+TEST_F(DBEngineTest, GeoPosMissingKeyReturnsError) {
+    keyval::DBEngine engine;
+
+    auto result = engine.GeoPos("missing", "Moscow");
+
+    ASSERT_FALSE(result.has_value());
+    EXPECT_EQ(result.error().code, keyval::error::ErrorCode::kKeyNotFound);
+}
+
+TEST_F(DBEngineTest, GeoPosMissingMemberReturnsError) {
+    keyval::DBEngine engine;
+
+    ASSERT_TRUE(engine.GeoAdd("cities", "Moscow", keyval::GeoPoint{55.7558, 37.6173}).has_value());
+
+    auto result = engine.GeoPos("cities", "SPB");
+
+    ASSERT_FALSE(result.has_value());
+    EXPECT_EQ(result.error().code, keyval::error::ErrorCode::kKeyNotFound);
+}
+
+TEST_F(DBEngineTest, GeoAddWrongTypeReturnsError) {
+    keyval::DBEngine engine;
+
+    ASSERT_TRUE(engine.Set("cities", "not geo").has_value());
+
+    auto result = engine.GeoAdd("cities", "Moscow", keyval::GeoPoint{55.7558, 37.6173});
+
+    ASSERT_FALSE(result.has_value());
+    EXPECT_EQ(result.error().code, keyval::error::ErrorCode::kWrongType);
+}
+
+TEST_F(DBEngineTest, GeoDistSamePointIsZero) {
+    keyval::DBEngine engine;
+
+    ASSERT_TRUE(engine.GeoAdd("cities", "Moscow", keyval::GeoPoint{55.7558, 37.6173}).has_value());
+
+    auto result = engine.GeoDist(
+        "cities",
+        "Moscow",
+        "Moscow",
+        keyval::GeoUnit::kKilometer);
+
+    ASSERT_TRUE(result.has_value());
+    EXPECT_NEAR(result.value(), 0.0, 1e-9);
+}
+
+TEST_F(DBEngineTest, GeoDistMoscowToSpbInKilometers) {
+    keyval::DBEngine engine;
+
+    ASSERT_TRUE(engine.GeoAdd("cities", "Moscow", keyval::GeoPoint{55.7558, 37.6173}).has_value());
+    ASSERT_TRUE(engine.GeoAdd("cities", "SPB", keyval::GeoPoint{59.9343, 30.3351}).has_value());
+
+    auto result = engine.GeoDist(
+        "cities",
+        "Moscow",
+        "SPB",
+        keyval::GeoUnit::kKilometer);
+
+    ASSERT_TRUE(result.has_value());
+
+    EXPECT_NEAR(result.value(), 633.0, 10.0);
+}
+
+TEST_F(DBEngineTest, GeoDistSupportsMeters) {
+    keyval::DBEngine engine;
+
+    ASSERT_TRUE(engine.GeoAdd("cities", "Moscow", keyval::GeoPoint{55.7558, 37.6173}).has_value());
+    ASSERT_TRUE(engine.GeoAdd("cities", "SPB", keyval::GeoPoint{59.9343, 30.3351}).has_value());
+
+    auto result = engine.GeoDist(
+        "cities",
+        "Moscow",
+        "SPB",
+        keyval::GeoUnit::kMeter);
+
+    ASSERT_TRUE(result.has_value());
+
+    EXPECT_NEAR(result.value(), 633000.0, 10000.0);
+}
+
+TEST_F(DBEngineTest, GeoSearchFindsPointsInsideRadius) {
+    keyval::DBEngine engine;
+
+    ASSERT_TRUE(engine.GeoAdd("cities", "Moscow", keyval::GeoPoint{55.7558, 37.6173}).has_value());
+    ASSERT_TRUE(engine.GeoAdd("cities", "SPB", keyval::GeoPoint{59.9343, 30.3351}).has_value());
+
+    auto result = engine.GeoSearch(
+        "cities",
+        keyval::GeoPoint{55.7558, 37.6173},
+        700.0,
+        keyval::GeoUnit::kKilometer,
+        10,
+        true);
+
+    ASSERT_TRUE(result.has_value());
+    EXPECT_EQ(result.value().size(), 2);
+}
+
+TEST_F(DBEngineTest, GeoSearchDoesNotReturnPointsOutsideRadius) {
+    keyval::DBEngine engine;
+
+    ASSERT_TRUE(engine.GeoAdd("cities", "Moscow", keyval::GeoPoint{55.7558, 37.6173}).has_value());
+    ASSERT_TRUE(engine.GeoAdd("cities", "SPB", keyval::GeoPoint{59.9343, 30.3351}).has_value());
+
+    auto result = engine.GeoSearch(
+        "cities",
+        keyval::GeoPoint{55.7558, 37.6173},
+        100.0,
+        keyval::GeoUnit::kKilometer,
+        10,
+        true);
+
+    ASSERT_TRUE(result.has_value());
+    EXPECT_EQ(result.value().size(), 1);
+    EXPECT_DOUBLE_EQ(result.value()[0].latitude, 55.7558);
+    EXPECT_DOUBLE_EQ(result.value()[0].longitude, 37.6173);
+}
+
+TEST_F(DBEngineTest, GeoSearchAscendingSortsByDistance) {
+    keyval::DBEngine engine;
+
+    ASSERT_TRUE(engine.GeoAdd("cities", "Moscow", keyval::GeoPoint{55.7558, 37.6173}).has_value());
+    ASSERT_TRUE(engine.GeoAdd("cities", "SPB", keyval::GeoPoint{59.9343, 30.3351}).has_value());
+
+    auto result = engine.GeoSearch(
+        "cities",
+        keyval::GeoPoint{55.7558, 37.6173},
+        700.0,
+        keyval::GeoUnit::kKilometer,
+        2,
+        true);
+
+    ASSERT_TRUE(result.has_value());
+    ASSERT_EQ(result.value().size(), 2);
+
+    EXPECT_DOUBLE_EQ(result.value()[0].latitude, 55.7558);
+    EXPECT_DOUBLE_EQ(result.value()[0].longitude, 37.6173);
+}
+
+TEST_F(DBEngineTest, GeoSearchCountLimitsResult) {
+    keyval::DBEngine engine;
+
+    ASSERT_TRUE(engine.GeoAdd("cities", "Moscow", keyval::GeoPoint{55.7558, 37.6173}).has_value());
+    ASSERT_TRUE(engine.GeoAdd("cities", "SPB", keyval::GeoPoint{59.9343, 30.3351}).has_value());
+
+    auto result = engine.GeoSearch(
+        "cities",
+        keyval::GeoPoint{55.7558, 37.6173},
+        700.0,
+        keyval::GeoUnit::kKilometer,
+        1,
+        true);
+
+    ASSERT_TRUE(result.has_value());
+    EXPECT_EQ(result.value().size(), 1);
+}
+
+TEST_F(DBEngineTest, GeoSearchStoreCreatesDestinationGeoIndex) {
+    keyval::DBEngine engine;
+
+    ASSERT_TRUE(engine.GeoAdd("cities", "Moscow", keyval::GeoPoint{55.7558, 37.6173}).has_value());
+    ASSERT_TRUE(engine.GeoAdd("cities", "SPB", keyval::GeoPoint{59.9343, 30.3351}).has_value());
+
+    auto result = engine.GeoSearchStore(
+        "near",
+        "cities",
+        keyval::GeoPoint{55.7558, 37.6173},
+        100.0,
+        keyval::GeoUnit::kKilometer,
+        10,
+        true);
+
+    ASSERT_TRUE(result.has_value());
+    EXPECT_EQ(result.value().size(), 1);
+
+    auto type = engine.Type("near");
+    ASSERT_TRUE(type.has_value());
+    EXPECT_EQ(type.value(), StorageType::kGeo);
+
+    auto pos = engine.GeoPos("near", "Moscow");
+    ASSERT_TRUE(pos.has_value());
+    EXPECT_DOUBLE_EQ(pos.value().latitude, 55.7558);
+    EXPECT_DOUBLE_EQ(pos.value().longitude, 37.6173);
+}
+
+TEST_F(DBEngineTest, GeoSearchStoreFailsWhenDestinationExists) {
+    keyval::DBEngine engine;
+
+    ASSERT_TRUE(engine.GeoAdd("cities", "Moscow", keyval::GeoPoint{55.7558, 37.6173}).has_value());
+    ASSERT_TRUE(engine.Set("near", "already exists").has_value());
+
+    auto result = engine.GeoSearchStore(
+        "near",
+        "cities",
+        keyval::GeoPoint{55.7558, 37.6173},
+        100.0,
+        keyval::GeoUnit::kKilometer,
+        10,
+        true);
+
+    ASSERT_FALSE(result.has_value());
+}
