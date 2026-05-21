@@ -60,8 +60,8 @@ ValKeyResult ValKeyInterpreter::GeoPos(std::span<const std::string> args) {
         if (!res.has_value()) {
             return ValKeyError{res.error().description};
         }
-        result.push_back(std::to_string(res.value().latitude) + "," +
-                         std::to_string(res.value().longitude));
+        result.push_back(std::to_string(res.value().longitude) + "," +
+                         std::to_string(res.value().latitude));
     }
 
     return result;
@@ -203,8 +203,8 @@ ValKeyResult ValKeyInterpreter::GeoSearch(std::span<const std::string> args) {
 
     std::vector<std::string> ans;
     for (const auto& point : res.value()) {
-        ans.push_back(std::to_string(point.latitude) + "," +
-                      std::to_string(point.longitude));
+        ans.push_back(point.member + "," + std::to_string(point.point.latitude) + "," +
+                      std::to_string(point.point.longitude));
     }
 
     return ans;

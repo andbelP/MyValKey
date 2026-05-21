@@ -547,8 +547,8 @@ TEST_F(DBEngineTest, GeoSearchDoesNotReturnPointsOutsideRadius) {
 
     ASSERT_TRUE(result.has_value());
     EXPECT_EQ(result.value().size(), 1);
-    EXPECT_DOUBLE_EQ(result.value()[0].latitude, 55.7558);
-    EXPECT_DOUBLE_EQ(result.value()[0].longitude, 37.6173);
+    EXPECT_DOUBLE_EQ(result.value()[0].point.latitude, 55.7558);
+    EXPECT_DOUBLE_EQ(result.value()[0].point.longitude, 37.6173);
 }
 
 TEST_F(DBEngineTest, GeoSearchAscendingSortsByDistance) {
@@ -567,8 +567,8 @@ TEST_F(DBEngineTest, GeoSearchAscendingSortsByDistance) {
     ASSERT_TRUE(result.has_value());
     ASSERT_EQ(result.value().size(), 2);
 
-    EXPECT_DOUBLE_EQ(result.value()[0].latitude, 55.7558);
-    EXPECT_DOUBLE_EQ(result.value()[0].longitude, 37.6173);
+    EXPECT_DOUBLE_EQ(result.value()[0].point.latitude, 55.7558);
+    EXPECT_DOUBLE_EQ(result.value()[0].point.longitude, 37.6173);
 }
 
 TEST_F(DBEngineTest, GeoSearchCountLimitsResult) {

@@ -142,9 +142,9 @@ std::expected<double, error::Error> DBEngine::GeoDist(std::string_view key,
     return ConvertUnitsFromKm(distance_km, unit);
 }
 
-std::expected<std::vector<GeoPoint>, error::Error> DBEngine::GeoSearch(
-    std::string_view key, GeoPoint center, double radius, GeoUnit unit,
-    std::size_t count, bool ascending) {
+std::expected<std::vector<GeoPointWithDetails>, error::Error>
+DBEngine::GeoSearch(std::string_view key, GeoPoint center, double radius,
+                    GeoUnit unit, std::size_t count, bool ascending) {
     DeleteIfExpired(key);
 
     auto it = storage_.find(std::string(key));
@@ -161,43 +161,32 @@ std::expected<std::vector<GeoPoint>, error::Error> DBEngine::GeoSearch(
 
     const auto& geo = std::get<GeoEntry>(it->second.value);
 
-    struct GeoPointWithDistance {
-        GeoPoint point;
-        double distance;
-    };
-
-    std::vector<GeoPointWithDistance> items;
+    std::vector<GeoPointWithDetails> items;
     for (auto& el : geo) {
         double distance =
             ConvertUnitsFromKm(HaversinFormulaKm(center, el.second), unit);
         if (distance <= radius) {
-            items.push_back({el.second, distance});
+            items.push_back({el.first, el.second, distance});
         }
     }
 
-    std::ranges::sort(items, [ascending](const GeoPointWithDistance& first,
-                                         const GeoPointWithDistance& second) {
+    std::ranges::sort(items, [ascending](const GeoPointWithDetails& first,
+                                         const GeoPointWithDetails& second) {
         if (ascending) {
             return first.distance < second.distance;
         }
         return first.distance > second.distance;
     });
 
-    std::vector<GeoPoint> ans;
-    ans.reserve(items.size());
-    for (auto& el : items) {
-        if (ans.size() >= count) {
-            break;
-        }
-        ans.push_back(el.point);
-    }
-
-    return ans;
+    return items.size() > count ? std::vector<GeoPointWithDetails>(
+                                      items.begin(), items.begin() + count)
+                                : items;
 }
 
-std::expected<std::vector<GeoPoint>, error::Error> DBEngine::GeoSearchStore(
-    std::string_view dest, std::string_view source, GeoPoint center,
-    double radius, GeoUnit unit, std::size_t count, bool ascending) {
+std::expected<std::vector<GeoPointWithDetails>, error::Error>
+DBEngine::GeoSearchStore(std::string_view dest, std::string_view source,
+                         GeoPoint center, double radius, GeoUnit unit,
+                         std::size_t count, bool ascending) {
     DeleteIfExpired(source);
     DeleteIfExpired(dest);
 
@@ -215,13 +204,7 @@ std::expected<std::vector<GeoPoint>, error::Error> DBEngine::GeoSearchStore(
 
     const auto& geo = std::get<GeoEntry>(it->second.value);
 
-    struct GeoPointWithDistance {
-        std::string member;
-        GeoPoint point;
-        double distance;
-    };
-
-    std::vector<GeoPointWithDistance> items;
+    std::vector<GeoPointWithDetails> items;
     for (auto& el : geo) {
         double distance =
             ConvertUnitsFromKm(HaversinFormulaKm(center, el.second), unit);
@@ -230,8 +213,8 @@ std::expected<std::vector<GeoPoint>, error::Error> DBEngine::GeoSearchStore(
         }
     }
 
-    std::ranges::sort(items, [ascending](const GeoPointWithDistance& first,
-                                         const GeoPointWithDistance& second) {
+    std::ranges::sort(items, [ascending](const GeoPointWithDetails& first,
+                                         const GeoPointWithDetails& second) {
         if (ascending) {
             return first.distance < second.distance;
         }
@@ -258,13 +241,13 @@ std::expected<std::vector<GeoPoint>, error::Error> DBEngine::GeoSearchStore(
     storage_[std::string(dest)] =
         StorageEntry(std::move(result), StorageType::kGeo);
 
-    std::vector<GeoPoint> ans;
+    std::vector<GeoPointWithDetails> ans;
     ans.reserve(items.size());
     for (auto& el : items) {
         if (ans.size() >= count) {
             break;
         }
-        ans.push_back(el.point);
+        ans.push_back(el);
     }
 
     return ans;

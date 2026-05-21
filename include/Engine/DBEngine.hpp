@@ -25,6 +25,12 @@ struct GeoPoint {
     double longitude;
 };
 
+ struct GeoPointWithDetails {
+        std::string member;
+        GeoPoint point;
+        double distance;
+    };
+
 enum class GeoUnit { kMeter, kKilometer, kMile, kFoot };
 
 using GeoEntry = std::unordered_map<std::string, GeoPoint>;
@@ -135,11 +141,11 @@ class DBEngine {
                                                 std::string_view member2,
                                                 GeoUnit unit);
 
-    std::expected<std::vector<GeoPoint>, error::Error> GeoSearch(
+    std::expected<std::vector<GeoPointWithDetails>, error::Error> GeoSearch(
         std::string_view key, GeoPoint center, double radius, GeoUnit unit,
         std::size_t count, bool ascending = true);
 
-    std::expected<std::vector<GeoPoint>, error::Error> GeoSearchStore(
+    std::expected<std::vector<GeoPointWithDetails>, error::Error> GeoSearchStore(
         std::string_view dest, std::string_view source, GeoPoint center,
         double radius, GeoUnit unit, std::size_t count, bool ascending = true);
 
