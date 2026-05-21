@@ -10,6 +10,8 @@ add_library(keyval
     ValKeyInterpreter/ValKeyInterpreterString.cpp
     Parser/CommandParser.cpp
     ValKeyInterpreter/Utils.cpp
+    Engine/DBEngineGeo.cpp
+    ValKeyInterpreter/ValKeyInterpreterGeo.cpp
 )
 target_include_directories(keyval PUBLIC 
     ${PROJECT_SOURCE_DIR}/include

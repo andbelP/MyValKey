@@ -113,6 +113,8 @@ std::expected<size_t, error::Error> DBEngine::MemoryUsageOfEntry(
         case StorageType::kSet:
             return GetSizeOfSet(
                 std::get<std::unordered_set<std::string>>(entry.value));
+        case StorageType::kGeo:
+            return GetSizeOfGeoEntry(std::get<GeoEntry>(entry.value));
     }
     return std::unexpected(
         error::Error{error::ErrorCode::kUndefinedError, "Unknown storage type"});

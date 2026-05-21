@@ -57,6 +57,16 @@ class ValKeyInterpreter {
 
     ValKeyResult SMove(std::span<const std::string> args);
 
+    ValKeyResult GeoAdd(std::span<const std::string> args);
+
+    ValKeyResult GeoPos(std::span<const std::string> args);
+
+    ValKeyResult GeoDist(std::span<const std::string> args);
+
+    ValKeyResult GeoSearch(std::span<const std::string> args);
+
+    ValKeyResult GeoSearchStore(std::span<const std::string> args);
+
     ValKeyResult Del(std::span<const std::string> args);
 
     ValKeyResult Exists(std::span<const std::string> args);
@@ -111,7 +121,12 @@ class ValKeyInterpreter {
         {"DBSIZE", &ValKeyInterpreter::DbSize},
         {"MEMORY", &ValKeyInterpreter::MemoryUsage},
         {"CONFIG", &ValKeyInterpreter::Config},
-        {"APPEND", &ValKeyInterpreter::Append}
+        {"APPEND", &ValKeyInterpreter::Append},
+        {"GEOADD", &ValKeyInterpreter::GeoAdd},
+        {"GEOPOS", &ValKeyInterpreter::GeoPos},
+        {"GEODIST", &ValKeyInterpreter::GeoDist},
+        {"GEOSEARCH", &ValKeyInterpreter::GeoSearch},
+        {"GEOSEARCHSTORE", &ValKeyInterpreter::GeoSearchStore},
     };
 
 public:

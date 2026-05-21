@@ -115,3 +115,18 @@ std::expected<std::size_t, keyval::ValKeyError> ParseMemorySize(
     }
     return res.value();
 }
+
+std::expected<double, std::string> ParseDouble(const std::string& text) {
+    try {
+        std::size_t pos = 0;
+        auto value = std::stod(text, &pos);
+
+        if (pos != text.size()) {
+            return std::unexpected("invalid number");
+        }
+
+        return value;
+    } catch (const std::exception&) {
+        return std::unexpected("invalid number");
+    }
+}
