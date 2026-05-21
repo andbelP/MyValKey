@@ -1,7 +1,9 @@
+#include <span>
+#include <string>
+
+#include "CommandResult/CommandResult.hpp"
+#include "ErrorsHandling/Error.hpp"
 #include "ValKeyInterpreter/ValKeyInterpreter.hpp"
-
-
-
 
 namespace keyval {
 
@@ -13,13 +15,14 @@ ValKeyResult ValKeyInterpreter::Set(std::span<const std::string> args) {
     auto result = engine_.Set(args[0], args[1]);
     if (!result.has_value()) {
         if (result.error().code == error::ErrorCode::kMaxMemoryExceeded) {
-            return ValKeyError{"OOM command not allowed when used memory > 'maxmemory'"};
+            return ValKeyError{
+                "OOM command not allowed when used memory > 'maxmemory'"};
         }
         return ValKeyError{result.error().description};
     }
 
     return Ok{};
-}
+}  // namespace keyval
 
 ValKeyResult ValKeyInterpreter::Get(std::span<const std::string> args) {
     if (args.size() != 1) {
@@ -61,13 +64,23 @@ ValKeyResult ValKeyInterpreter::Append(std::span<const std::string> args) {
     auto result = engine_.Append(args[0], args[1]);
     if (!result.has_value()) {
         if (result.error().code == error::ErrorCode::kMaxMemoryExceeded) {
-            return ValKeyError{"OOM command not allowed when used memory > 'maxmemory'"}; // TODO поменять названия ошибок в DBENGINE чтобы не делать тут костыли.
+            return ValKeyError{
+                "OOM command not allowed when used memory > 'maxmemory'"};  // TODO
+                                                                            // поменять
+                                                                            // названия
+                                                                            // ошибок
+                                                                            // в
+                                                                            // DBENGINE
+                                                                            // чтобы
+                                                                            // не
+                                                                            // делать
+                                                                            // тут
+                                                                            // костыли.
         }
         return ValKeyError{result.error().description};
     }
 
     return std::to_string(engine_.StrLen(args[0]).value());
-
 }
 
-}
+}  // namespace keyval

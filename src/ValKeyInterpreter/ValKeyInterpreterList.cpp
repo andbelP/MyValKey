@@ -1,5 +1,12 @@
-#include "ValKeyInterpreter.hpp"
+#include <cstddef>
+#include <span>
+#include <string>
+#include <vector>
+
+#include "CommandResult/CommandResult.hpp"
+#include "ErrorsHandling/Error.hpp"
 #include "Utils.hpp"
+#include "ValKeyInterpreter.hpp"
 
 namespace keyval {
 
@@ -12,7 +19,8 @@ ValKeyResult ValKeyInterpreter::LPush(std::span<const std::string> args) {
         auto result = engine_.LPush(args[0], args[i]);
         if (!result.has_value()) {
             if (result.error().code == error::ErrorCode::kMaxMemoryExceeded) {
-                return ValKeyError{"OOM command not allowed when used memory > 'maxmemory'"};
+                return ValKeyError{
+                    "OOM command not allowed when used memory > 'maxmemory'"};
             }
             return ValKeyError{result.error().description};
         }
@@ -35,7 +43,8 @@ ValKeyResult ValKeyInterpreter::RPush(std::span<const std::string> args) {
         auto result = engine_.RPush(args[0], args[i]);
         if (!result.has_value()) {
             if (result.error().code == error::ErrorCode::kMaxMemoryExceeded) {
-                return ValKeyError{"OOM command not allowed when used memory > 'maxmemory'"};
+                return ValKeyError{
+                    "OOM command not allowed when used memory > 'maxmemory'"};
             }
             return ValKeyError{result.error().description};
         }
@@ -71,7 +80,7 @@ ValKeyResult ValKeyInterpreter::LPop(std::span<const std::string> args) {
     if (!count.has_value()) {
         return ValKeyError{count.error()};
     }
-    if(count.value()<0){
+    if (count.value() < 0) {
         return ValKeyError{"cnt must be positive"};
     }
 
@@ -114,7 +123,7 @@ ValKeyResult ValKeyInterpreter::RPop(std::span<const std::string> args) {
     if (!count.has_value()) {
         return ValKeyError{count.error()};
     }
-    if(count.value()<0){
+    if (count.value() < 0) {
         return ValKeyError{"cnt must be positive"};
     }
 
@@ -166,10 +175,7 @@ ValKeyResult ValKeyInterpreter::LRange(std::span<const std::string> args) {
         return ValKeyError{stop.error()};
     }
 
-    auto result = engine_.LRange(
-        args[0],
-        start.value(),
-        stop.value());
+    auto result = engine_.LRange(args[0], start.value(), stop.value());
 
     if (!result.has_value()) {
         if (result.error().code == error::ErrorCode::kKeyNotFound) {
@@ -191,9 +197,7 @@ ValKeyResult ValKeyInterpreter::LIndex(std::span<const std::string> args) {
         return ValKeyError{index.error()};
     }
 
-    auto result = engine_.LIndex(
-        args[0],
-        index.value());
+    auto result = engine_.LIndex(args[0], index.value());
 
     if (!result.has_value()) {
         if (result.error().code == error::ErrorCode::kKeyNotFound ||
@@ -216,14 +220,12 @@ ValKeyResult ValKeyInterpreter::LSet(std::span<const std::string> args) {
         return ValKeyError{index.error()};
     }
 
-    auto result = engine_.LSet(
-        args[0],
-        index.value(),
-        args[2]);
+    auto result = engine_.LSet(args[0], index.value(), args[2]);
 
     if (!result.has_value()) {
         if (result.error().code == error::ErrorCode::kMaxMemoryExceeded) {
-            return ValKeyError{"OOM command not allowed when used memory > 'maxmemory'"};
+            return ValKeyError{
+                "OOM command not allowed when used memory > 'maxmemory'"};
         }
         return ValKeyError{result.error().description};
     }
@@ -232,63 +234,66 @@ ValKeyResult ValKeyInterpreter::LSet(std::span<const std::string> args) {
 }
 
 ValKeyResult ValKeyInterpreter::LInsert(std::span<const std::string> args) {
-
-    if(args.size() != 4){
+    if (args.size() != 4) {
         return ValKeyError("invalid args cnt");
     }
 
     auto size_exp = engine_.LLen(args[0]);
-    if(!size_exp){
-        if(size_exp.error().code == error::ErrorCode::kKeyNotFound){
+    if (!size_exp) {
+        if (size_exp.error().code == error::ErrorCode::kKeyNotFound) {
             return "0";
         }
         return ValKeyError{size_exp.error().description};
     }
 
-    for(int i = 0; i < size_exp.value(); ++i){
+    for (int i = 0; i < size_exp.value(); ++i) {
         auto val = engine_.LIndex(args[0], i);
-        if(!val){
+        if (!val) {
             return ValKeyError{val.error().description};
         }
-        if(val.value() == args[2]){
-            if(ToUpper(args[1]) == "BEFORE"){
+        if (val.value() == args[2]) {
+            if (ToUpper(args[1]) == "BEFORE") {
                 auto result = engine_.LInsert(args[0], i, args[3]);
                 if (!result.has_value()) {
-                    if (result.error().code == error::ErrorCode::kMaxMemoryExceeded) {
-                        return ValKeyError{"OOM command not allowed when used memory > 'maxmemory'"};
+                    if (result.error().code ==
+                        error::ErrorCode::kMaxMemoryExceeded) {
+                        return ValKeyError{
+                            "OOM command not allowed when used memory > "
+                            "'maxmemory'"};
                     }
                     return ValKeyError{result.error().description};
                 }
 
                 auto len_exp = engine_.LLen(args[0]);
-                if(!len_exp){
+                if (!len_exp) {
                     return ValKeyError(len_exp.error().description);
                 }
                 return std::to_string(len_exp.value());
 
-            } else if(ToUpper(args[1]) == "AFTER"){
-
-                auto result = engine_.LInsert(args[0], i+1, args[3]);
+            } else if (ToUpper(args[1]) == "AFTER") {
+                auto result = engine_.LInsert(args[0], i + 1, args[3]);
                 if (!result.has_value()) {
-                    if (result.error().code == error::ErrorCode::kMaxMemoryExceeded) {
-                        return ValKeyError{"OOM command not allowed when used memory > 'maxmemory'"};
+                    if (result.error().code ==
+                        error::ErrorCode::kMaxMemoryExceeded) {
+                        return ValKeyError{
+                            "OOM command not allowed when used memory > "
+                            "'maxmemory'"};
                     }
                     return ValKeyError{result.error().description};
                 }
-                
+
                 auto len_exp = engine_.LLen(args[0]);
-                if(!len_exp){
+                if (!len_exp) {
                     return ValKeyError(len_exp.error().description);
                 }
                 return std::to_string(len_exp.value());
 
-            } else{
+            } else {
                 return ValKeyError{"second arg must be BEFORE or AFTER"};
             }
         }
     }
     return "-1";
-
 }
 
 }  // namespace keyval

@@ -1,15 +1,16 @@
 #include "Glob/GlobMatcher.hpp"
 
+#include <cstddef>
+#include <string_view>
+
 namespace keyval {
 
 bool GlobMatcher::Match(std::string_view pattern, std::string_view text) {
     return MatchImpl(pattern, text, 0, 0);
 }
 
-bool GlobMatcher::MatchImpl(std::string_view pattern,
-                            std::string_view text,
-                            std::size_t pattern_pos,
-                            std::size_t text_pos) {
+bool GlobMatcher::MatchImpl(std::string_view pattern, std::string_view text,
+                            std::size_t pattern_pos, std::size_t text_pos) {
     while (pattern_pos < pattern.size()) {
         char pattern_char = pattern[pattern_pos];
 
@@ -57,10 +58,8 @@ bool GlobMatcher::MatchImpl(std::string_view pattern,
     return text_pos == text.size();
 }
 
-bool GlobMatcher::ProcessStar(std::string_view pattern,
-                              std::string_view text,
-                              std::size_t pattern_pos,
-                              std::size_t text_pos) {
+bool GlobMatcher::ProcessStar(std::string_view pattern, std::string_view text,
+                              std::size_t pattern_pos, std::size_t text_pos) {
     while (pattern_pos < pattern.size() && pattern[pattern_pos] == '*') {
         ++pattern_pos;
     }
@@ -79,8 +78,7 @@ bool GlobMatcher::ProcessStar(std::string_view pattern,
 }
 
 bool GlobMatcher::ProcessChar(std::string_view pattern,
-                              std::size_t& pattern_pos,
-                              char text_char) {
+                              std::size_t& pattern_pos, char text_char) {
     ++pattern_pos;
 
     if (pattern_pos >= pattern.size()) {
@@ -132,4 +130,4 @@ bool GlobMatcher::ProcessChar(std::string_view pattern,
     return false;
 }
 
-} // namespace keyval
+}  // namespace keyval

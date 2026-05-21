@@ -1,3 +1,10 @@
+#include <cstddef>
+#include <span>
+#include <string>
+#include <vector>
+
+#include "CommandResult/CommandResult.hpp"
+#include "ErrorsHandling/Error.hpp"
 #include "ValKeyInterpreter.hpp"
 
 namespace keyval {
@@ -24,7 +31,8 @@ ValKeyResult ValKeyInterpreter::SAdd(std::span<const std::string> args) {
         auto result = engine_.SAdd(args[0], args[i]);
         if (!result.has_value()) {
             if (result.error().code == error::ErrorCode::kMaxMemoryExceeded) {
-                return ValKeyError{"OOM command not allowed when used memory > 'maxmemory'"};
+                return ValKeyError{
+                    "OOM command not allowed when used memory > 'maxmemory'"};
             }
             return ValKeyError{result.error().description};
         }
@@ -33,7 +41,7 @@ ValKeyResult ValKeyInterpreter::SAdd(std::span<const std::string> args) {
     }
 
     return std::to_string(added);
-}
+}  // namespace keyval
 
 ValKeyResult ValKeyInterpreter::SRem(std::span<const std::string> args) {
     if (args.size() < 2) {
@@ -96,7 +104,8 @@ ValKeyResult ValKeyInterpreter::SMembers(std::span<const std::string> args) {
         return ValKeyError{result.error().description};
     }
 
-    return std::vector<std::string>(result.value().begin(), result.value().end());
+    return std::vector<std::string>(result.value().begin(),
+                                    result.value().end());
 }
 
 ValKeyResult ValKeyInterpreter::SCard(std::span<const std::string> args) {
@@ -142,7 +151,8 @@ ValKeyResult ValKeyInterpreter::SUnion(std::span<const std::string> args) {
         return ValKeyError{result.error().description};
     }
 
-    return std::vector<std::string>(result.value().begin(), result.value().end());
+    return std::vector<std::string>(result.value().begin(),
+                                    result.value().end());
 }
 
 ValKeyResult ValKeyInterpreter::SInter(std::span<const std::string> args) {
@@ -158,7 +168,8 @@ ValKeyResult ValKeyInterpreter::SInter(std::span<const std::string> args) {
         return ValKeyError{result.error().description};
     }
 
-    return std::vector<std::string>(result.value().begin(), result.value().end());
+    return std::vector<std::string>(result.value().begin(),
+                                    result.value().end());
 }
 
 ValKeyResult ValKeyInterpreter::SDiff(std::span<const std::string> args) {
@@ -171,7 +182,8 @@ ValKeyResult ValKeyInterpreter::SDiff(std::span<const std::string> args) {
         return ValKeyError{result.error().description};
     }
 
-    return std::vector<std::string>(result.value().begin(), result.value().end());
+    return std::vector<std::string>(result.value().begin(),
+                                    result.value().end());
 }
 
 ValKeyResult ValKeyInterpreter::SMove(std::span<const std::string> args) {
@@ -179,7 +191,7 @@ ValKeyResult ValKeyInterpreter::SMove(std::span<const std::string> args) {
         return ValKeyError("invalid args cnt");
     }
 
-    if(!engine_.Exists(args[1]).value_or(false)){
+    if (!engine_.Exists(args[1]).value_or(false)) {
         auto res = engine_.SCreate(args[1]);
         if (!res.has_value()) {
             return ValKeyError{res.error().description};
@@ -193,7 +205,8 @@ ValKeyResult ValKeyInterpreter::SMove(std::span<const std::string> args) {
         }
 
         if (result.error().code == error::ErrorCode::kMaxMemoryExceeded) {
-            return ValKeyError{"OOM command not allowed when used memory > 'maxmemory'"};
+            return ValKeyError{
+                "OOM command not allowed when used memory > 'maxmemory'"};
         }
 
         return ValKeyError{result.error().description};
@@ -202,4 +215,4 @@ ValKeyResult ValKeyInterpreter::SMove(std::span<const std::string> args) {
     return std::string("1");
 }
 
-}
+}  // namespace keyval

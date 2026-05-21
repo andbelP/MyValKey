@@ -1,10 +1,16 @@
 #include <algorithm>
 #include <cmath>
+#include <cstddef>
+#include <expected>
 #include <string>
+#include <string_view>
+#include <utility>
 #include <vector>
 
 #include "Engine/DBEngine.hpp"
+#include "Engine/StorageTypes.hpp"
 #include "Engine/TypesSizes.hpp"
+#include "ErrorsHandling/Error.hpp"
 
 namespace keyval {
 
@@ -180,7 +186,7 @@ std::expected<std::vector<GeoPoint>, error::Error> DBEngine::GeoSearch(
     std::vector<GeoPoint> ans;
     ans.reserve(items.size());
     for (auto& el : items) {
-        if(ans.size() >= count){
+        if (ans.size() >= count) {
             break;
         }
         ans.push_back(el.point);
@@ -232,21 +238,19 @@ std::expected<std::vector<GeoPoint>, error::Error> DBEngine::GeoSearchStore(
         return first.distance > second.distance;
     });
 
-
     auto dest_it = storage_.find(std::string(dest));
     if (dest_it != storage_.end()) {
-        return std::unexpected(
-            error::Error{error::ErrorCode::kKeyAlreadyExists,
-                         "Destination key already exists"});
+        return std::unexpected(error::Error{error::ErrorCode::kKeyAlreadyExists,
+                                            "Destination key already exists"});
     }
-
 
     GeoEntry result;
     for (std::size_t i = 0; i < items.size() && i < count; i++) {
         result[items[i].member] = items[i].point;
     }
 
-    if (max_memory_usage_.has_value() && !CanAddBytes(GetSizeOfGeoEntry(result))) {
+    if (max_memory_usage_.has_value() &&
+        !CanAddBytes(GetSizeOfGeoEntry(result))) {
         return std::unexpected(
             error::Error{error::ErrorCode::kMaxMemoryExceeded,
                          "Cant store GeoPoint: max memory usage exceeded"});
@@ -254,11 +258,10 @@ std::expected<std::vector<GeoPoint>, error::Error> DBEngine::GeoSearchStore(
     storage_[std::string(dest)] =
         StorageEntry(std::move(result), StorageType::kGeo);
 
-
     std::vector<GeoPoint> ans;
     ans.reserve(items.size());
     for (auto& el : items) {
-        if(ans.size() >= count){
+        if (ans.size() >= count) {
             break;
         }
         ans.push_back(el.point);
